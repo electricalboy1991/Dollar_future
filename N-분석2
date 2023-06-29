@@ -1,0 +1,45 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun 22 15:45:01 2023
+
+@author: soos.hwang
+"""
+
+import pandas as pd
+
+df = pd.read_csv('N_Max.csv',index_col='Unnamed: 0')
+
+#%%
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+data = []
+labels = []
+for i in range(17):
+    data.append(df[df['0'] == i+1])
+    labels.append('Data ' + str(i+1))
+    
+def normalize_data(data):
+    min_val = np.min(data)
+    max_val = np.max(data)
+    normalized_data = (data - min_val) / (max_val - min_val)
+    return normalized_data
+
+for i in range(17):
+    # plt.plot(data[i]['1'], normalize_data(data[i]['3']), label=labels[i])
+    plt.plot(data[i]['1'][50:80], normalize_data(data[i]['3'][50:80]), label=labels[i])
+
+
+# plt.plot(data_1['1'], normalize_data(data_1['3']), label='Data 1')
+# plt.plot(data_2['1'], normalize_data(data_2['3']), label='Data 2')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.show()
+
+
+
+
+
