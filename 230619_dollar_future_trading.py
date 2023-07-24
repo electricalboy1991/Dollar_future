@@ -55,6 +55,10 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
             if range_gap < gap and flags[flag_key] == 1:
                 line_alert.SendMessage_SP(f"[USD 숏으로 벌기 \U0001F535 롱 {i+2}]" + Telegram_str)
                 flags[flag_key] = 0
+
+        if range_gap < 1 and flags['flag_0'] ==1 :
+            line_alert.SendMessage_SP(f"[USD 숏으로 벌기 \U0001F535 롱 1]" + Telegram_str)
+            flags['flag_0'] = 0
     else:
         pass
 
@@ -62,7 +66,7 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
 range_gap_list = [6 + i * 6 for i in range(20)]
 
 if __name__ == "__main__":
-    flags = {f'flag_{i}': 0 for i in range(20)}
+    flags = {f'flag_{i}': 0 for i in range(21)}
     min_temp = 0
 
     while True:
