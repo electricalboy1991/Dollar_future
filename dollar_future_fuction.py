@@ -7,6 +7,16 @@ def get_exchange_rate():
     exchange_rate = ticker.history().tail(1)["Close"].values[0]
     return exchange_rate
 
+def get_exchange_rate_JP():
+    ticker = yf.Ticker("USDJPY=X")  # Yahoo Finance symbol for USD to PHP exchange rate
+    exchange_rate = ticker.history().tail(1)["Close"].values[0]
+    return exchange_rate
+
+def get_exchange_rate_JP_KR():
+    ticker = yf.Ticker("JPYKRW=X")  # Yahoo Finance symbol for USD to PHP exchange rate
+    exchange_rate = ticker.history().tail(1)["Close"].values[0]
+    return exchange_rate
+
 def get_dollar_index():
     ticker = yf.Ticker("DX-Y.NYB")  # Yahoo Finance symbol for the dollar index
     data = ticker.history().tail(1)

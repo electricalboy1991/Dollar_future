@@ -16,7 +16,7 @@ reer_url = "https://stats.bis.org/api/v1"
 
 # Series ID
 flow = "BIS,WS_EER_D"
-key = "D.N.N.KR"
+key = "D.N.B.KR"
 
 # 현재 날짜 가져오기
 current_date = datetime.now().date()
@@ -60,6 +60,7 @@ alpha_api_key = "HWZOMLBRHSJIBIS5"
 
 # Alpha Vantage API 엔드포인트 URL
 alpha_url = f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=USD&to_symbol=KRW&outputsize=full&apikey={alpha_api_key}"
+alpha_url_index = f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=USD&to_symbol=DX&outputsize=full&apikey={alpha_api_key}"
 
 # API 요청
 # proxy_server = "12.26.204.100:8080"
@@ -67,6 +68,12 @@ alpha_url = f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=US
 # alpha_response = requests.get(alpha_url, proxies=proxies, verify=False)
 alpha_response = requests.get(alpha_url)
 alpha_data = alpha_response.json()
+
+
+alpha_index_response = requests.get(alpha_url_index)
+alpha_index_data = alpha_index_response.json()
+
+
 
 # JSON 데이터를 DataFrame으로 변환
 alpha_df = pd.DataFrame(alpha_data["Time Series FX (Daily)"]).T
@@ -84,7 +91,7 @@ merged_df.REER = merged_df.REER.astype('float')
 merged_df.close = merged_df.close.astype('float')
 merged_df['gap'] = merged_df.REER * merged_df.close / 10000
 
-proper_value = (merged_df.gap.median() / merged_df.REER[-1] * 10000 + 1200) / 2
+proper_value = (merged_df.gap[-255:].median() / merged_df.REER[-1] * 10000 + 1200) / 2
 print('REER 최신 날짜 : ', reer_data[-1][0])
 print(proper_value, proper_value - 1261)
 

@@ -1,16 +1,20 @@
-from alpha_vantage.timeseries import TimeSeries
+from alpha_vantage.foreignexchange import ForeignExchange
 
 # Set your Alpha Vantage API key
 api_key = 'HWZOMLBRHSJIBIS5'
 
-# Create a TimeSeries instance
-ts = TimeSeries(key=api_key)
+# Create a ForeignExchange instance
+fx = ForeignExchange(key=api_key)
 
 # Specify the symbol for Dollar Index
-symbol = 'DX'
+from_currency = 'USD'
+to_currency = 'DX'
+
+# Specify the desired output size ('compact' or 'full')
+output_size = 'full'
 
 # Retrieve the daily exchange rate data for a year
-data, _ = ts.get_daily_adjusted(symbol=symbol, outputsize='full')
+data, _ = fx.get_currency_exchange_daily(from_symbol=from_currency, to_symbol=to_currency, outputsize=output_size)
 
 # Print the retrieved data
 for date, values in data.items():
