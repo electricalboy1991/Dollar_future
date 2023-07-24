@@ -93,83 +93,91 @@ while True:
         print("적정 환율", std_value)
 
         range_gap=round(usd_to_krw-std_value,2)
-        Telegram_str = "\nRange : "+str(range_gap) +" \n환율 : "+str(round(usd_to_krw,2))  +" \n적정 : "+str(round(std_value,2))
+        Telegram_str =  " \n# 포지션 : " + str(round(range_gap*4/3, 1)) +"\n$ Range : "+str(range_gap) + " 개"+" \n$ 환율 : "+str(round(usd_to_krw,2))  +" \n$ 적정 : "+str(round(std_value,2))
+        
+        
+        if range_gap<0:
+            Telegram_str = " \n# 포지션 : " + str(round(-1*range_gap * 4 / 3, 1)) + " 개 Long "+ "\n$ Range : " + str(-1*range_gap)+" Long" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std_value, 2))
+        else:
+            Telegram_str = " \n# 포지션 : " + str(round(range_gap * 4 / 3, 1))+ " 개 Short " +"\n$ Range :  " + str(range_gap)+" Short"  + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std_value, 2))
+            
+            
 
         if range_gap >range_gap_list[0] and flag_0 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 1]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 1]" + Telegram_str)
             flag_0 = 1
 
         elif range_gap > range_gap_list[1] and flag_1 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 2]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 2]" + Telegram_str)
             flag_1 = 1
 
         elif range_gap > range_gap_list[2] and flag_2 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 3]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 3]" + Telegram_str)
             flag_2 = 1
 
         elif range_gap > range_gap_list[3] and flag_3 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 4]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 4]" + Telegram_str)
             flag_3 = 1
         elif range_gap > range_gap_list[4] and flag_4 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 5]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 5]" + Telegram_str)
             flag_4 = 1
         elif range_gap > range_gap_list[5] and flag_5 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 6]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 6]" + Telegram_str)
             flag_5 = 1
         elif range_gap > range_gap_list[6] and flag_6 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 7]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 7]" + Telegram_str)
             flag_6= 1
         elif range_gap > range_gap_list[7] and flag_7 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 8]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 8]" + Telegram_str)
             flag_7 = 1
         elif range_gap > range_gap_list[8] and flag_8 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 9]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 9]" + Telegram_str)
             flag_8 = 1
         elif range_gap > range_gap_list[9] and flag_9 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 10]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 10]" + Telegram_str)
             flag_9 = 1
         elif range_gap > range_gap_list[10] and flag_10 == 0:
-            line_alert.SendMessage_SP("[\U0001F534 숏 11]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F534 숏 11]" + Telegram_str)
             flag_10 = 1
 
 
 
 
         if range_gap < 0 and flag_0 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 1]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 1]" + Telegram_str)
             flag_0 = 0
 
         elif range_gap < range_gap_list[0] and flag_1 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 2]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 2]" + Telegram_str)
             flag_1 = 0
 
         elif range_gap < range_gap_list[1] and flag_2 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 3]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 3]" + Telegram_str)
             flag_2 = 0
 
         elif range_gap < range_gap_list[2] and flag_3 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 4]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 4]" + Telegram_str)
             flag_3 = 0
         elif range_gap < range_gap_list[3] and flag_4 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 5]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 5]" + Telegram_str)
             flag_4 = 0
         elif range_gap < range_gap_list[4] and flag_5 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 6]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 6]" + Telegram_str)
             flag_5 = 0
         elif range_gap < range_gap_list[5] and flag_6 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 7]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 7]" + Telegram_str)
             flag_6 = 0
         elif range_gap < range_gap_list[6] and flag_7 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 8]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 8]" + Telegram_str)
             flag_7 = 0
         elif range_gap < range_gap_list[7] and flag_8 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 9]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 9]" + Telegram_str)
             flag_8 = 0
         elif range_gap < range_gap_list[8] and flag_9 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 10]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 10]" + Telegram_str)
             flag_9 = 0
         elif range_gap < range_gap_list[9] and flag_10 == 1:
-            line_alert.SendMessage_SP("[\U0001F535 롱 11]" + Telegram_str)
+            line_alert.SendMessage_SP("[USD \U0001F535 롱 11]" + Telegram_str)
             flag_10 = 0
 
         if min_flag == 1:
@@ -177,7 +185,7 @@ while True:
             KR_time = str(current_time)
             KR_time_sliced = KR_time[:23]
 
-            line_alert.SendMessage_dollar("\U0001F64A" + KR_time_sliced + "\U0001F64A  \n" + Telegram_str)
+            line_alert.SendMessage_dollar("USD\U0001F4B0" + KR_time_sliced + "\U0001F4B0USD  \n" + Telegram_str)
         else:
             continue
 
