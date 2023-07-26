@@ -12,6 +12,8 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import datetime, timedelta
+import yfinance as yf
+
 
 if platform.system() == 'Windows':
     data_52_index_gap_file_path = "C:\\Users\world\PycharmProjects\Dollar_future\data_52_index_gap.json"
@@ -53,14 +55,14 @@ def get_data_frame(soup, data_key):
     reer_df.set_index('Date', inplace=True)
     return reer_df
 
-def get_alpha_data(alpha_api_key, url):
-    response = requests.get(url)
-    alpha_data = response.json()
-    alpha_df = pd.DataFrame(alpha_data["Time Series FX (Daily)"]).T
-    print('2')
-    alpha_df.columns = ["open", "high", "low", "close"]
-    alpha_df = alpha_df.iloc[:400]
-    return alpha_df
+def get_currency_data(ticker, start_date, end_date):
+    # Fetch data using yfinance
+    data = yf.download(ticker, start=start_date, end=end_date)
+
+    # Filter relevant columns (Open, High, Low, Close) and create a new DataFrame
+    df = pd.DataFrame(data, columns=["Open", "High", "Low", "Close"])
+    df.index = df.index.date
+    return df
 
 def get_dollar_index_value(dollar_index_data):
     return dollar_index_data["Close"].values[0]
@@ -151,15 +153,21 @@ if __name__ == "__main__":
                 reer_df = get_data_frame(soup, 'REER')
                 reer_df_JP = get_data_frame(soup_JP, 'REER')
 
-                alpha_api_key = "HWZOMLBRHSJIBIS5"
-                alpha_url = f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=USD&to_symbol=KRW&outputsize=full&apikey={alpha_api_key}"
-                alpha_url_JP = f"https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=USD&to_symbol=JPY&outputsize=full&apikey={alpha_api_key}"
+                ticker = "KRW=X"  # Ticker for USD/KRW currency pair in yfinance
+                ticker_JP = "JPY=X"
 
-                alpha_df = get_alpha_data(alpha_api_key, alpha_url)
-                alpha_df_JP = get_alpha_data(alpha_api_key, alpha_url_JP)
+                end_date = datetime.today().strftime('%Y-%m-%d')
+                start_date = (datetime.today() - timedelta(days=400)).strftime('%Y-%m-%d')
+
+                alpha_df = get_currency_data(ticker, start_date, end_date)
+                alpha_df.index.name = 'Date'
+                alpha_df_JP = get_currency_data(ticker_JP, start_date, end_date)
 
                 merged_df = pd.merge(reer_df, alpha_df, left_index=True, right_index=True)
                 merged_df_JP = pd.merge(reer_df_JP, alpha_df_JP, left_index=True, right_index=True)
+
+                # merged_df = pd.merge(reer_df, alpha_df)
+                # merged_df_JP = pd.merge(reer_df_JP, alpha_df_JP)
 
                 merged_df.REER = merged_df.REER.astype('float')
                 merged_df_JP.REER = merged_df_JP.REER.astype('float')
