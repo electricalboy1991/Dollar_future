@@ -11,7 +11,7 @@ import json
 import numpy as np
 
 if platform.system() == 'Windows':
-    data_52_index_gap_file_path = "C:\\Users\world\PycharmProjects\Crypto\data_52_index_gap.json"
+    data_52_index_gap_file_path = "C:\\Users\world\PycharmProjects\Dollar_future\data_52_index_gap.json"
 else:
     data_52_index_gap_file_path = "/var/autobot/data_52_index_gap.json"
 
@@ -60,7 +60,21 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
             line_alert.SendMessage_SP(f"[USD 숏으로 벌기 \U0001F535 롱 1]" + Telegram_str)
             flags['flag_0'] = 0
     else:
-        pass
+        for i, gap in enumerate(range_gap_list):
+            flag_key = f'flag_{i}'
+            if -range_gap > gap and flags[flag_key] == 0:
+                line_alert.SendMessage_SP(f"[ USD 롱으로 벌기 \U0001F535 롱 {i+1}]" + Telegram_str)
+                flags[flag_key] = 1
+
+        for i, gap in enumerate(range_gap_list):
+            flag_key = f'flag_{i+1}'
+            if -range_gap < gap and flags[flag_key] == 1:
+                line_alert.SendMessage_SP(f"[USD 롱으로 벌기 \U0001F534 숏 {i+2}]" + Telegram_str)
+                flags[flag_key] = 0
+
+        if -range_gap < 1 and flags['flag_0'] ==1 :
+            line_alert.SendMessage_SP(f"[USD 롱으로 벌기 \U0001F534 숏 1]" + Telegram_str)
+            flags['flag_0'] = 0
 
 
 range_gap_list = [6 + i * 6 for i in range(20)]
