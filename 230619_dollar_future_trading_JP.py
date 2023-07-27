@@ -56,11 +56,19 @@ def get_data_frame(soup, data_key):
 def get_alpha_data(alpha_api_key, url):
     response = requests.get(url)
     alpha_data = response.json()
+
+    # alpha_data 딕셔너리에 있는 키 출력
+    print("alpha_data에 있는 키들:", alpha_data.keys())
+
+    # alpha_data 전체 구조 확인
+    print("alpha_data:", alpha_data)
+
+    # 기존 코드를 사용하여 DataFrame 생성
     alpha_df = pd.DataFrame(alpha_data["Time Series FX (Daily)"]).T
-    print('2')
     alpha_df.columns = ["open", "high", "low", "close"]
     alpha_df = alpha_df.iloc[:400]
     return alpha_df
+
 
 def get_dollar_index_value(dollar_index_data):
     return dollar_index_data["Close"].values[0]
