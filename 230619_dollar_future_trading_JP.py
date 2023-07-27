@@ -62,6 +62,7 @@ def get_currency_data(ticker, start_date, end_date):
     # Filter relevant columns (Open, High, Low, Close) and create a new DataFrame
     df = pd.DataFrame(data, columns=["Open", "High", "Low", "Close"])
     df.index = df.index.date
+    df.index = df.index.astype("str")
     return df
 
 def get_dollar_index_value(dollar_index_data):
@@ -85,37 +86,41 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
         nation = '\U0001F5FD USD'
     else:
         nation = '\U0001F5FE YEN'
+
+    # 숏으로 포지션 잡는 단계
     if range_gap > 0:
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i}'
             if range_gap > gap and flags[flag_key] == 0:
-                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F534 숏 {i+1}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F534 숏 포지션 늘리기 {i+1}]" + Telegram_str)
                 flags[flag_key] = 1
 
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i+1}'
             if range_gap < gap and flags[flag_key] == 1:
-                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 {i+2}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 수익화 {i+2}]" + Telegram_str)
                 flags[flag_key] = 0
 
         if range_gap < 1 and flags['flag_0'] ==1 :
-            line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 1]" + Telegram_str)
+            line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 수익화 1]" + Telegram_str)
             flags['flag_0'] = 0
+
+    # 롱으로 포지션 잡는 단계
     else:
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i}'
             if -range_gap > gap and flags[flag_key] == 0:
-                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F535 롱 {i+1}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F535 롱 포지션 늘리기 {i+1}]" + Telegram_str)
                 flags[flag_key] = 1
 
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i+1}'
             if -range_gap < gap and flags[flag_key] == 1:
-                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 {i+2}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 수익화 {i+2}]" + Telegram_str)
                 flags[flag_key] = 0
 
         if -range_gap < 1 and flags['flag_0'] ==1 :
-            line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 1]" + Telegram_str)
+            line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 수익화 1]" + Telegram_str)
             flags['flag_0'] = 0
 
 if __name__ == "__main__":
@@ -160,7 +165,6 @@ if __name__ == "__main__":
                 start_date = (datetime.today() - timedelta(days=400)).strftime('%Y-%m-%d')
 
                 alpha_df = get_currency_data(ticker, start_date, end_date)
-                alpha_df.index.name = 'Date'
                 alpha_df_JP = get_currency_data(ticker_JP, start_date, end_date)
 
                 merged_df = pd.merge(reer_df, alpha_df, left_index=True, right_index=True)
@@ -171,14 +175,14 @@ if __name__ == "__main__":
 
                 merged_df.REER = merged_df.REER.astype('float')
                 merged_df_JP.REER = merged_df_JP.REER.astype('float')
-                merged_df.close = merged_df.close.astype('float')
-                merged_df_JP.close = merged_df_JP.close.astype('float')
+                merged_df.Close = merged_df.Close.astype('float')
+                merged_df_JP.Close = merged_df_JP.Close.astype('float')
 
-                reer_gap = merged_df.REER[-255:].mean() * merged_df.close[-255:].mean() / 10000
-                reer_gap_JP= merged_df_JP.REER[-255:].mean() * merged_df_JP.close[-255:].mean() / 10000
+                reer_gap = merged_df.REER[-255:].mean() * merged_df.Close[-255:].mean() / 10000
+                reer_gap_JP= merged_df_JP.REER[-255:].mean() * merged_df_JP.Close[-255:].mean() / 10000
 
-                merged_df['gap'] = merged_df.REER * merged_df.close / 10000
-                merged_df_JP['gap'] = merged_df_JP.REER * merged_df_JP.close / 10000
+                merged_df['gap'] = merged_df.REER * merged_df.Close / 10000
+                merged_df_JP['gap'] = merged_df_JP.REER * merged_df_JP.Close / 10000
 
                 reer_std = (reer_gap/ merged_df.REER[-1] * 10000)
                 reer_std_JP = (reer_gap_JP / merged_df_JP.REER[-1] * 10000)
