@@ -38,8 +38,8 @@ gap_ratio_aver = 7.996879864
 consen_rate, rate_gap_criteria, min_temp = 1200, 3, 0
 range_gap_list = [6 + i * 6 for i in range(20)]
 range_gap_list_JP = [6 + i * 6 for i in range(20)]
-flags = [0] * 20
-position_down_crit = 18
+position_down_crit_JP = 18
+position_down_crit = 24
 
 DX_ratio = 0.6
 reer_ratio = 1-DX_ratio
@@ -83,9 +83,9 @@ def update_data(data_path, gap_ratio_today):
 
 def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
     if '$' in Telegram_str:
-        nation = '\U0001F5FD USD'
+        nation = '\U0001F4B0 USD'
     else:
-        nation = '\U0001F5FE YEN'
+        nation = '\U0001F64A YEN'
 
     # 숏으로 포지션 잡는 단계
     if range_gap > 0:
@@ -125,6 +125,7 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
 
 if __name__ == "__main__":
     flags = {f'flag_{i}': 0 for i in range(21)}
+    flags_JP = {f'flag_{i}': 0 for i in range(21)}
     min_temp = 0
     while True:
         try:
@@ -246,22 +247,26 @@ if __name__ == "__main__":
                 if range_gap_JP >-19:
                     Telegram_str_JP = f"\n# 포지션: {round(-1*range_gap_JP , 1)} 개 Long\n￥ Range: {-1*range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
                 else:
-                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit +(-range_gap_JP-position_down_crit)* 2 / 3, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
+                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit_JP +(-range_gap_JP-position_down_crit_JP)* 2 / 3, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
             else:
                 if range_gap_JP <19:
                     Telegram_str_JP = f"\n# 포지션: {round(range_gap_JP , 1)} 개 Short\n￥ Range: {range_gap_JP} Short\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
                 else:
-                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit +(range_gap_JP-position_down_crit)* 2 / 3, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
+                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit_JP +(range_gap_JP-position_down_crit_JP)* 2 / 3, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}"
 
-            check_and_send_message(range_gap_JP, range_gap_list_JP, flags, Telegram_str_JP)
-            #
-            # for i in range(20):
-            #     if range_gap_JP > range_gap_list_JP[i] and flags[i] == 0:
-            #         line_alert.SendMessage_SP(f"[JPY '\U0001F534' 숏 {i+1}]{Telegram_str_JP}")
-            #         flags[i] = 1
-            #     elif range_gap_JP < 0 and flags[i] == 1:
-            #         line_alert.SendMessage_SP(f"[JPY '\U0001F535' 롱 {i+1}]{Telegram_str_JP}")
-            #         flags[i] = 0
+            if range_gap < 0:
+                if range_gap > -26:
+                    Telegram_str = " \n# 포지션 : " + str(round(-1 * range_gap * 4 / 3, 1)) + " 개 Long " + "\n$ Range : " + str(-1 * range_gap) + " Long" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))
+                else:
+                    Telegram_str = " \n# 포지션 : " + str(round(position_down_crit * 4 / 3 + (-range_gap - position_down_crit) * 5 / 6, 1)) + " 개 Long " + "\n$ Range : " + str(-1 * range_gap) + " Long" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))
+            else:
+                if range_gap < 26:
+                    Telegram_str = " \n# 포지션 : " + str(round(range_gap * 4 / 3, 1)) + " 개 Short " + "\n$ Range :  " + str(range_gap) + " Short" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))
+                else:
+                    Telegram_str = " \n# 포지션 : " + str(round(position_down_crit * 4 / 3 + (range_gap - position_down_crit) * 5 / 6, 1)) + " 개 Short " + "\n$ Range :  " + str(range_gap) + " Short" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))
+
+            check_and_send_message(range_gap, range_gap_list, flags, Telegram_str)
+            check_and_send_message(range_gap_JP, range_gap_list_JP, flags_JP, Telegram_str_JP)
 
             if min_flag == 1:
                 current_time = datetime.now(timezone('Asia/Seoul'))
@@ -270,6 +275,16 @@ if __name__ == "__main__":
                 line_alert.SendMessage_dollar(f"JPY \U0001F64A{KR_time_sliced}\U0001F64A JPY{Telegram_str_JP}")
             else:
                 continue
+
+            if min_flag == 1:
+                current_time = datetime.now(timezone('Asia/Seoul'))
+                KR_time = str(current_time)
+                KR_time_sliced = KR_time[:23]
+
+                line_alert.SendMessage_dollar("USD\U0001F4B0" + KR_time_sliced + "\U0001F4B0USD  \n" + Telegram_str)
+            else:
+                continue
+
         except Exception as e:
             time.sleep(5.5)
             exc_type, exc_obj, exc_tb = sys.exc_info()
