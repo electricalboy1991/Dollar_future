@@ -44,8 +44,10 @@ position_down_crit = 25
 investment_flag = 1
 investment_flag_JP = 1
 MA80_flag = 1
+#이거 MA로 투자 필터링하는 경우
+MA_filter_criteria = 70
 
-sigma_below = 7/5
+sigma_below = 6/5
 sigma_above = 1
 sigma_below_JP = 6/5
 sigma_above_JP = 6/7
@@ -101,17 +103,17 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i}'
             if range_gap > gap and flags[flag_key] == 0:
-                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F534 숏 포지션 늘리기 {i+1}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 숏 ing \U0001F534 숏 포지션 늘리기 {i+1}]" + Telegram_str)
                 flags[flag_key] = 1
 
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i+1}'
             if range_gap < gap and flags[flag_key] == 1:
-                line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 수익화 {i+2}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 숏 ing \U0001F535 롱 수익화 {i+2}]" + Telegram_str)
                 flags[flag_key] = 0
 
         if range_gap < 1 and flags['flag_0'] ==1 :
-            line_alert.SendMessage_SP(f"[ {nation} 숏으로 벌기 \U0001F535 롱 수익화 1]" + Telegram_str)
+            line_alert.SendMessage_SP(f"[ {nation} 숏 ing \U0001F535 롱 수익화 1]" + Telegram_str)
             flags['flag_0'] = 0
 
     # 롱으로 포지션 잡는 단계
@@ -119,17 +121,17 @@ def check_and_send_message(range_gap, range_gap_list, flags, Telegram_str):
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i}'
             if -range_gap > gap and flags[flag_key] == 0:
-                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F535 롱 포지션 늘리기 {i+1}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 롱 ing \U0001F535 롱 포지션 늘리기 {i+1}]" + Telegram_str)
                 flags[flag_key] = 1
 
         for i, gap in enumerate(range_gap_list):
             flag_key = f'flag_{i+1}'
             if -range_gap < gap and flags[flag_key] == 1:
-                line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 수익화 {i+2}]" + Telegram_str)
+                line_alert.SendMessage_SP(f"[ {nation} 롱 ing \U0001F534 숏 수익화 {i+2}]" + Telegram_str)
                 flags[flag_key] = 0
 
         if -range_gap < 1 and flags['flag_0'] ==1 :
-            line_alert.SendMessage_SP(f"[ {nation} 롱으로 벌기 \U0001F534 숏 수익화 1]" + Telegram_str)
+            line_alert.SendMessage_SP(f"[ {nation} 롱 ing \U0001F534 숏 수익화 1]" + Telegram_str)
             flags['flag_0'] = 0
 
 if __name__ == "__main__":
@@ -255,30 +257,30 @@ if __name__ == "__main__":
 
             if range_gap < 0:
                 if range_gap > -position_down_crit:
-                    Telegram_str = " \n# 포지션 : " + str(round(-1 * range_gap * sigma_below, 1)) + " 개 Long " + "\n$ Range : " + str(-1 * range_gap) + " Long" \
-                                   + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA : " + str(round(MA, 2))
+                    Telegram_str = " \n# 추가 포지션 : " + str(round(position_span*sigma_below, 1)) + " 개 Long " +" \n# 포지션 : " + str(round(-1 * range_gap * sigma_below, 1)) + " 개 Long " + "\n$ Range : " + str(-1 * range_gap) + " Long" \
+                                   + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA filter : " + str(round(MA+MA_filter_criteria, 2))
                 else:
-                    Telegram_str = " \n# 포지션 : " + str(round(position_down_crit * sigma_below + (-range_gap - position_down_crit) * sigma_above, 1)) + " 개 Long " \
-                                   + "\n$ Range : " + str(-1 * range_gap) + " Long" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA : " + str(round(MA, 2))
+                    Telegram_str = " \n# 추가 포지션 : " + str(round(position_span*sigma_above, 1)) + " 개 Long " +" \n# 포지션 : " + str(round(position_down_crit * sigma_below + (-range_gap - position_down_crit) * sigma_above, 1)) + " 개 Long " \
+                                   + "\n$ Range : " + str(-1 * range_gap) + " Long" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA filter: " + str(round(MA+MA_filter_criteria, 2))
             else:
                 if range_gap < position_down_crit:
-                    Telegram_str = " \n# 포지션 : " + str(round(range_gap * sigma_below, 1)) + " 개 Short " + "\n$ Range :  " + str(range_gap) + " Short" \
-                                   + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA : " + str(round(MA, 2))
+                    Telegram_str = " \n# 추가 포지션 : " + str(round(position_span*sigma_below, 1)) + " 개 Short " +" \n# 포지션 : " + str(round(range_gap * sigma_below, 1)) + " 개 Short " + "\n$ Range :  " + str(range_gap) + " Short" \
+                                   + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA filter: " + str(round(MA+MA_filter_criteria, 2))
                 else:
-                    Telegram_str = " \n# 포지션 : " + str(round(position_down_crit * sigma_below + (range_gap - position_down_crit) * sigma_above, 1)) + " 개 Short " \
-                                   + "\n$ Range :  " + str(range_gap) + " Short" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA : " + str(round(MA, 2))
+                    Telegram_str = " \n# 추가 포지션 : " + str(round(position_span*sigma_above, 1)) + " 개 Short " +" \n# 포지션 : " + str(round(position_down_crit * sigma_below + (range_gap - position_down_crit) * sigma_above, 1)) + " 개 Short " \
+                                   + "\n$ Range :  " + str(range_gap) + " Short" + " \n$ 환율 : " + str(round(usd_to_krw, 2)) + " \n$ 적정 : " + str(round(std, 2))+" \n$ GC : " + str(round(GC, 2))+" \n$ MA filter: " + str(round(MA+MA_filter_criteria, 2))
 
             if range_gap_JP < 0:
                 if range_gap_JP >-position_down_crit_JP:
-                    Telegram_str_JP = f"\n# 포지션: {round(-1*range_gap_JP * sigma_below_JP , 1)} 개 Long\n￥ Range: {-1*range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
+                    Telegram_str_JP = f"\n# 추가 포지션 : {round(position_span*sigma_below_JP, 1)} 개 Long \n# 포지션: {round(-1*range_gap_JP * sigma_below_JP , 1)} 개 Long\n￥ Range: {-1*range_gap_JP} Long\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
                 else:
-                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit_JP* sigma_below_JP +(-range_gap_JP-position_down_crit_JP)* sigma_above_JP, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n" \
+                    Telegram_str_JP = f"\n# 추가 포지션 : {round(position_span*sigma_above_JP, 1)} 개 Long \n# 포지션: {round(position_down_crit_JP* sigma_below_JP +(-range_gap_JP-position_down_crit_JP)* sigma_above_JP, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n" \
                                       f"￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
             else:
                 if range_gap_JP <position_down_crit_JP:
-                    Telegram_str_JP = f"\n# 포지션: {round(range_gap_JP * sigma_below_JP, 1)} 개 Short\n￥ Range: {range_gap_JP} Short\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
+                    Telegram_str_JP = f"\n# 추가 포지션 : {round(position_span*sigma_below_JP, 1)} 개 Short \n# 포지션: {round(range_gap_JP * sigma_below_JP, 1)} 개 Short\n￥ Range: {range_gap_JP} Short\n￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
                 else:
-                    Telegram_str_JP = f"\n# 포지션: {round(position_down_crit_JP* sigma_below_JP +(range_gap_JP-position_down_crit_JP)* sigma_above_JP, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n" \
+                    Telegram_str_JP = f"\n# 추가 포지션 : {round(position_span*sigma_above_JP, 1)} 개 Short \n# 포지션: {round(position_down_crit_JP* sigma_below_JP +(range_gap_JP-position_down_crit_JP)* sigma_above_JP, 1)} 개 Long\n￥ Range: {-1 * range_gap_JP} Long\n" \
                                       f"￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
 
             check_and_send_message(range_gap, range_gap_list, flags, Telegram_str)
@@ -297,12 +299,12 @@ if __name__ == "__main__":
                 line_alert.SendMessage_SP("[ \U0001F64A USD 투자 START (PV)  \U0001F680 ]" + Telegram_str_JP)
                 investment_flag_JP = 1
 
-            if np.mean(json.load(open(data_52_dollar_file_path))[:100]) + 80 <= usd_to_krw:
-                line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 STOP (MA+80)  \U0001F6A8 ]" + Telegram_str)
+            if np.mean(json.load(open(data_52_dollar_file_path))[:100]) + +MA_filter_criteria <= usd_to_krw:
+                line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 STOP (MA filter)  \U0001F6A8 ]" + Telegram_str)
                 MA80_flag = 0
 
-            elif np.mean(json.load(open(data_52_dollar_file_path))[:100]) + 80 > usd_to_krw and MA80_flag==0:
-                line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 START (MA+80)  \U0001F680 ]" + Telegram_str)
+            elif np.mean(json.load(open(data_52_dollar_file_path))[:100]) + +MA_filter_criteria > usd_to_krw and MA80_flag==0:
+                line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 START (MA filter)  \U0001F680 ]" + Telegram_str)
                 MA80_flag = 1
 
             if min_flag == 1:
