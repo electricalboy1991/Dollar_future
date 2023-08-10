@@ -47,8 +47,8 @@ MA80_flag = 1
 #이거 MA로 투자 필터링하는 경우
 MA_filter_criteria = 70
 
-sigma_below = 6/5
-sigma_above = 1
+sigma_below = 5/5
+sigma_above = 4/5
 sigma_below_JP = 6/5
 sigma_above_JP = 6/7
 
