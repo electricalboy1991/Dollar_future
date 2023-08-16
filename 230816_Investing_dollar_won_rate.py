@@ -7,15 +7,15 @@ ua = UserAgent()
 header = {'User-Agent': str(ua.random)}
 
 while 1:
-
-    BASE_URL = 'https://kr.investing.com/currencies/us-dollar-index'
+    pair = 'USD'
+    BASE_URL = 'https://kr.investing.com/currencies/{}-{}'.format(pair.lower(), 'krw')
     url = Request(BASE_URL, headers=header)
     html = urlopen(url)
 
     if html.status == 200:
         print('인베스팅')
         soup = BeautifulSoup(html, 'html.parser')
-        element = soup.find('span', class_='arial_26 inlineblock pid-8827-last', id='last_last')
+        element = soup.find('span', {'data-test': 'instrument-price-last'})
         print(round(float(element.text.replace(',', '')), 2))
 
     else:
