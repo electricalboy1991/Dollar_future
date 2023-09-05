@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 # Constants
 years = 3
@@ -40,7 +43,8 @@ df = pd.read_csv('n분석_data.csv')
 
 # 수익 계산 함수
 def calculate_profit(a, n):
-    balance = initial_balance
+    short_balance = initial_balance
+    long_balance = initial_balance
     contracts = int(n)  # c is fixed to n
     liquidations = 0 # 청산 횟수
     total_num_cont = 0 # 수수료 계산을 위한 전체 계약 수
@@ -57,7 +61,7 @@ def calculate_profit(a, n):
             for i, short_position in enumerate(short_positions):
                 if price <= short_position['short_target_price']:
                     profit = short_position['short_target_price']*(a/(1-a)) * contracts
-                    balance += profit
+                    short_balance += profit
                     liquidations += 1
                     short_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
@@ -84,7 +88,7 @@ def calculate_profit(a, n):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
                     profit = long_position['long_target_price']*(a/(a+1)) * contracts
-                    balance += profit
+                    long_balance += profit
                     liquidations += 1
                     long_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
@@ -107,15 +111,15 @@ def calculate_profit(a, n):
                         total_num_cont = contracts + total_num_cont
                         # print("롱 잡기 추가",short_positions,long_positions)
 
-    return balance, liquidations, total_num_cont
+    return short_balance, long_balance, liquidations, total_num_cont
 
 
 # a는 청산 percent 값
 # a_range = np.arange(0.01, 0.035, 0.001)
-a_range = np.arange(0.002, 0.015, 0.001) # 1200원 기준 2.4원 ~ 36원
+a_range = np.arange(0.001, 0.010, 0.001) # 1200원 기준 2.4원 ~ 36원
 # 포지션 잡는 Grid 기준
 # n_range = np.arange(2, 8, 0.1)
-n_range = np.arange(2, 8, 0.2)
+n_range = np.arange(2, 12, 1)
 
 # # Parameter ranges
 # # Profit liquidation percent
@@ -124,19 +128,23 @@ n_range = np.arange(2, 8, 0.2)
 # n_range = np.arange(4,5.5, 0.5)
 
 profits = np.zeros((len(a_range), len(n_range)))
+short_profits = np.zeros((len(a_range), len(n_range)))
+long_profits = np.zeros((len(a_range), len(n_range)))
 num_liquidations_array = np.zeros((len(a_range), len(n_range)))
 total_commission_array = np.zeros((len(a_range), len(n_range)))
 
 # a,n에 따라 수익을 계산하기 위한 이중 for문
 for i, a in enumerate(a_range):
     for j, n in enumerate(n_range):
-        final_balance, num_liquidations, total_num_cont = calculate_profit(a, n)
+        short_balance, long_balance, num_liquidations, total_num_cont = calculate_profit(a, n)
         total_commission = total_num_cont * commission
-        profits[i][j] = final_balance - initial_balance - total_commission
+        profits[i][j] = short_balance + long_balance - initial_balance - total_commission
+        short_profits[i][j] = short_balance
+        long_profits[i][j] = long_balance
         num_liquidations_array[i][j] = num_liquidations
         total_commission_array[i][j] = total_commission
 
-        print(a, n,num_liquidations,total_commission, profits[i][j])
+        print(a, n,num_liquidations,total_commission,short_profits[i][j],long_profits[i][j], profits[i][j])
 
 # 3D plot
 fig = plt.figure()
@@ -151,9 +159,38 @@ ax.set_ylabel('Position grid')
 ax.set_zlabel('Profit')
 ax.set_title('Profit Simulation')
 
-# Add annotations
-for i in range(len(a_range)):
-    for j in range(len(n_range)):
-        ax.text(a_range[i], n_range[j], profits[i][j], f'Num Liquidations: {num_liquidations_array[i][j]}\nTotal Commission: {total_commission_array[i][j]:.2f}', fontsize=8, ha='center', va='bottom')
-
-plt.show()
+#
+# # 3D plot
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# N, A = np.meshgrid(n_range, a_range)
+# surf = ax.plot_surface(A, N, profits, cmap='viridis')
+#
+# # Label
+# ax.set_xlabel('Position liquidation percent')
+# ax.set_ylabel('Position grid')
+# ax.set_zlabel('Profit')
+# ax.set_title('Profit Simulation')
+#
+# # 마우스 클릭 이벤트 핸들러
+# def on_click(event):
+#     if event.inaxes == ax:
+#         x, y = event.xdata, event.ydata
+#         i = np.searchsorted(a_range, x)
+#         j = np.searchsorted(n_range, y)
+#
+#         # Check if the index is within bounds
+#         if 0 <= i < len(a_range) and 0 <= j < len(n_range):
+#             a_value = a_range[i]
+#             n_value = n_range[j]
+#             profit_value = profits[i][j]
+#             num_liquidations_value = num_liquidations_array[i][j]
+#             total_commission_value = total_commission_array[i][j]
+#             print(f'a: {a_value}, n: {n_value}, Profits: {profit_value}, Num Liquidations: {num_liquidations_value}, Total Commission: {total_commission_value}')
+#         else:
+#             print("Clicked outside the valid range")
+#
+# # 이벤트 연결
+# cid = fig.canvas.mpl_connect('button_press_event', on_click)
+#
+# plt.show()
