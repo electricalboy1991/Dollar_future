@@ -48,61 +48,74 @@ def calculate_profit(a, n):
     long_positions = []
 
     for index, row in df.iterrows():
+        short_liquid_flag = 0
+        long_liquid_flag = 0
         price = row['close']
-
+        # print(index,price)
         if price >= 1200 or (price <= 1200 and short_positions):
             # Short position
             for i, short_position in enumerate(short_positions):
-                if price <= short_position['target_price']:
-                    profit = short_position['target_price']*(a/(1-a)) * contracts
+                if price <= short_position['short_target_price']:
+                    profit = short_position['short_target_price']*(a/(1-a)) * contracts
                     balance += profit
                     liquidations += 1
                     short_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
+                    # print("숏 청산",short_positions,long_positions)
+                    short_liquid_flag=1
                     break
-            if not short_positions:
+            if not short_positions and short_liquid_flag==0:
                 target_price = round(price * (1 - a), 4)
-                short_positions.append({'target_price': target_price})
+                short_positions.append({'short_target_price': target_price})
                 total_num_cont = contracts + total_num_cont
+                # print("초기 숏 잡기",short_positions,long_positions)
             else:
-                if short_positions[-1]['target_price']/(1 - a) + n < price and price >= 1200:
-                    # Create a new short position
-                    target_price = round(price * (1 - a), 4)
-                    short_positions.append({'target_price': target_price})
-                    total_num_cont = contracts+total_num_cont
-                else:
+                if not short_positions:
                     pass
+                else:
+                    if short_positions[-1]['short_target_price']/(1 - a) + n < price and price >= 1200:
+                        # Create a new short position
+                        target_price = round(price * (1 - a), 4)
+                        short_positions.append({'short_target_price': target_price})
+                        total_num_cont = contracts+total_num_cont
+                        # print("숏 잡기 추가",short_positions,long_positions)
 
         if price <= 1150 or (price >= 1150 and long_positions):
             for i, long_position in enumerate(long_positions):
-                if price >= long_position['target_price']:
-                    profit = long_position['target_price']*(a/(a+1)) * contracts
+                if price >= long_position['long_target_price']:
+                    profit = long_position['long_target_price']*(a/(a+1)) * contracts
                     balance += profit
                     liquidations += 1
                     long_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
+                    # print("롱 청산",short_positions,long_positions)
+                    long_liquid_flag=1
                     break
-            if not long_positions:
+            if not long_positions and long_liquid_flag==0:
                 target_price = round(price * (1 + a), 4)
-                long_positions.append({'target_price': target_price})
+                long_positions.append({'long_target_price': target_price})
                 total_num_cont = contracts + total_num_cont
+                # print("초기 롱 잡기",short_positions,long_positions)
             else:
-                if long_positions[-1]['target_price'] / (1 + a) - n > price and price <= 1200:
-                    # Create a new short position
-                    target_price = round(price * (1 + a), 4)
-                    long_positions.append({'target_price': target_price})
-                    total_num_cont = contracts + total_num_cont
-                else:
+                if not long_positions:
                     pass
+                else:
+                    if long_positions[-1]['long_target_price'] / (1 + a) - n > price and price <= 1200:
+                        # Create a new short position
+                        target_price = round(price * (1 + a), 4)
+                        long_positions.append({'long_target_price': target_price})
+                        total_num_cont = contracts + total_num_cont
+                        # print("롱 잡기 추가",short_positions,long_positions)
+
     return balance, liquidations, total_num_cont
 
 
 # a는 청산 percent 값
 # a_range = np.arange(0.01, 0.035, 0.001)
-a_range = np.arange(0.002, 0.030, 0.001) # 1200원 기준 2.4원 ~ 36원
+a_range = np.arange(0.002, 0.015, 0.001) # 1200원 기준 2.4원 ~ 36원
 # 포지션 잡는 Grid 기준
 # n_range = np.arange(2, 8, 0.1)
-n_range = np.arange(2, 8, 0.5)
+n_range = np.arange(2, 8, 0.2)
 
 # # Parameter ranges
 # # Profit liquidation percent
@@ -128,13 +141,13 @@ for i, a in enumerate(a_range):
 # 3D plot
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-A, N = np.meshgrid(a_range, n_range)
+N,A = np.meshgrid(n_range,a_range)
 
+# surf = ax.plot_surface(A, N, profits, cmap='viridis')
 surf = ax.plot_surface(A, N, profits, cmap='viridis')
-
-# Label
-ax.set_xlabel('a')
-ax.set_ylabel('n')
+# Label\
+ax.set_xlabel('Position liquidation percent')
+ax.set_ylabel('Position grid')
 ax.set_zlabel('Profit')
 ax.set_title('Profit Simulation')
 
