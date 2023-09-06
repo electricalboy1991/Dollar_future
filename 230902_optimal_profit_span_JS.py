@@ -45,7 +45,7 @@ df = pd.read_csv('n분석_data.csv')
 def calculate_profit(a, n):
     short_balance = initial_balance
     long_balance = initial_balance
-    contracts = int(n)  # c is fixed to n
+    contracts = n  # c is fixed to n
     liquidations = 0 # 청산 횟수
     total_num_cont = 0 # 수수료 계산을 위한 전체 계약 수
     short_positions = []
@@ -56,7 +56,10 @@ def calculate_profit(a, n):
         long_liquid_flag = 0
         price = row['close']
         # print(index,price)
-        if price >= 1200 or (price <= 1200 and short_positions):
+
+        # n 가 있는 이유는 n이 10이랑 1일 때랑 비교 시 단순 1200 기준으로 했을 때 문제가 생기기 때문
+        # 1201에서 n 10이여서 short 10개 치는 거랑, n 1이여서 short 1개 치는 거 비교하면 당연히 short 10개 치는 게 수익 많이 나오겠지
+        if price >= 1200 +n/2  or (price <= 1200+n/2  and short_positions):
             # Short position
             for i, short_position in enumerate(short_positions):
                 if price <= short_position['short_target_price']:
@@ -74,17 +77,18 @@ def calculate_profit(a, n):
                 total_num_cont = contracts + total_num_cont
                 # print("초기 숏 잡기",short_positions,long_positions)
             else:
+                #청산 후 바로 포지션 잡아버리는 거 막기 위함
                 if not short_positions:
                     pass
                 else:
-                    if short_positions[-1]['short_target_price']/(1 - a) + n < price and price >= 1200:
+                    if short_positions[-1]['short_target_price']/(1 - a) + n < price and price >= 1200+n/2  :
                         # Create a new short position
                         target_price = round(price * (1 - a), 4)
                         short_positions.append({'short_target_price': target_price})
                         total_num_cont = contracts+total_num_cont
                         # print("숏 잡기 추가",short_positions,long_positions)
 
-        if price <= 1150 or (price >= 1150 and long_positions):
+        if price <= 1150-n/2  or (price >= 1150-n/2  and long_positions):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
                     profit = long_position['long_target_price']*(a/(a+1)) * contracts
@@ -104,7 +108,7 @@ def calculate_profit(a, n):
                 if not long_positions:
                     pass
                 else:
-                    if long_positions[-1]['long_target_price'] / (1 + a) - n > price and price <= 1200:
+                    if long_positions[-1]['long_target_price'] / (1 + a) - n > price and price <= 1150-n/2 :
                         # Create a new short position
                         target_price = round(price * (1 + a), 4)
                         long_positions.append({'long_target_price': target_price})
@@ -115,11 +119,12 @@ def calculate_profit(a, n):
 
 
 # a는 청산 percent 값
-# a_range = np.arange(0.01, 0.035, 0.001)
-a_range = np.arange(0.001, 0.010, 0.001) # 1200원 기준 2.4원 ~ 36원
+
+# a_range = np.arange(0.001, 0.010, 0.001) # 1200원 기준 2.4원 ~ 36원
+a_range = np.arange(0.001, 0.015, 0.001) # 1200원 기준 1.2원 ~ 18원
 # 포지션 잡는 Grid 기준
-# n_range = np.arange(2, 8, 0.1)
-n_range = np.arange(2, 12, 1)
+# n_range = np.arange(2, 12, 1)
+n_range = np.arange(2, 20, 0.1)
 
 # # Parameter ranges
 # # Profit liquidation percent
@@ -158,7 +163,7 @@ ax.set_xlabel('Position liquidation percent')
 ax.set_ylabel('Position grid')
 ax.set_zlabel('Profit')
 ax.set_title('Profit Simulation')
-
+plt.show()
 #
 # # 3D plot
 # fig = plt.figure()

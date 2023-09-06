@@ -4,7 +4,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 # Load data from the CSV file
-df = pd.read_csv('230905_simulation_result.csv')
+# df = pd.read_csv('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 1.csv')
+df = pd.read_excel('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 1.xlsx')
 
 # Extract data from columns
 x_data = df['a']
