@@ -128,11 +128,9 @@ def calculate_profit(a, n):
 # n_range = np.arange(2, 20, 0.1)
 
 # a는 청산 percent 값
-a_range = np.arange(0.001, 0.004, 0.0002) # 1200원 기준 1.2원 ~ 18원
+a_range = np.arange(0.001, 0.010, 0.0002)
 # 포지션 잡는 Grid 기준
-n_range = np.arange(3, 8, 0.5)
-
-
+n_range = np.arange(3, 12, 0.5)
 
 # # Parameter ranges
 # # Profit liquidation percent
