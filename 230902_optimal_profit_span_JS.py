@@ -48,6 +48,8 @@ def calculate_profit(a, n):
     contracts = n  # c is fixed to n
     liquidations = 0 # 청산 횟수
     total_num_cont = 0 # 수수료 계산을 위한 전체 계약 수
+    short_num_cont = 0
+    long_num_cont = 0
     short_positions = []
     long_positions = []
 
@@ -68,14 +70,15 @@ def calculate_profit(a, n):
                     liquidations += 1
                     short_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
-                    # print("숏 청산",short_positions,long_positions)
+                    short_num_cont = contracts + short_num_cont
+                    # print("숏 청산",index,short_positions,long_positions)
                     short_liquid_flag=1
                     break
             if not short_positions and short_liquid_flag==0:
                 target_price = round(price * (1 - a), 4)
                 short_positions.append({'short_target_price': target_price})
                 total_num_cont = contracts + total_num_cont
-                # print("초기 숏 잡기",short_positions,long_positions)
+                # print("초기 숏 잡기",index,short_positions,long_positions)
             else:
                 #청산 후 바로 포지션 잡아버리는 거 막기 위함
                 if not short_positions:
@@ -86,7 +89,7 @@ def calculate_profit(a, n):
                         target_price = round(price * (1 - a), 4)
                         short_positions.append({'short_target_price': target_price})
                         total_num_cont = contracts+total_num_cont
-                        # print("숏 잡기 추가",short_positions,long_positions)
+                        # print("숏 잡기 추가",index,short_positions,long_positions)
 
         if price <= 1150-n/2  or (price >= 1150-n/2  and long_positions):
             for i, long_position in enumerate(long_positions):
@@ -96,14 +99,15 @@ def calculate_profit(a, n):
                     liquidations += 1
                     long_positions.pop(i)
                     total_num_cont = contracts + total_num_cont
-                    # print("롱 청산",short_positions,long_positions)
+                    long_num_cont = contracts + long_num_cont
+                    # print("롱 청산",index,short_positions,long_positions)
                     long_liquid_flag=1
                     break
             if not long_positions and long_liquid_flag==0:
                 target_price = round(price * (1 + a), 4)
                 long_positions.append({'long_target_price': target_price})
                 total_num_cont = contracts + total_num_cont
-                # print("초기 롱 잡기",short_positions,long_positions)
+                # print("초기 롱 잡기",index,short_positions,long_positions)
             else:
                 if not long_positions:
                     pass
@@ -113,18 +117,22 @@ def calculate_profit(a, n):
                         target_price = round(price * (1 + a), 4)
                         long_positions.append({'long_target_price': target_price})
                         total_num_cont = contracts + total_num_cont
-                        # print("롱 잡기 추가",short_positions,long_positions)
+                        # print("롱 잡기 추가",index,short_positions,long_positions)
 
-    return short_balance, long_balance, liquidations, total_num_cont
+    return short_balance, long_balance, liquidations, total_num_cont,short_num_cont,long_num_cont
 
+
+# # a는 청산 percent 값
+# a_range = np.arange(0.001, 0.015, 0.001) # 1200원 기준 1.2원 ~ 18원
+# # 포지션 잡는 Grid 기준
+# n_range = np.arange(2, 20, 0.1)
 
 # a는 청산 percent 값
-
-# a_range = np.arange(0.001, 0.010, 0.001) # 1200원 기준 2.4원 ~ 36원
-a_range = np.arange(0.001, 0.015, 0.001) # 1200원 기준 1.2원 ~ 18원
+a_range = np.arange(0.001, 0.004, 0.0002) # 1200원 기준 1.2원 ~ 18원
 # 포지션 잡는 Grid 기준
-# n_range = np.arange(2, 12, 1)
-n_range = np.arange(2, 20, 0.1)
+n_range = np.arange(3, 8, 0.5)
+
+
 
 # # Parameter ranges
 # # Profit liquidation percent
@@ -141,11 +149,13 @@ total_commission_array = np.zeros((len(a_range), len(n_range)))
 # a,n에 따라 수익을 계산하기 위한 이중 for문
 for i, a in enumerate(a_range):
     for j, n in enumerate(n_range):
-        short_balance, long_balance, num_liquidations, total_num_cont = calculate_profit(a, n)
+        short_balance, long_balance, num_liquidations, total_num_cont,short_num_cont,long_num_cont = calculate_profit(a, n)
         total_commission = total_num_cont * commission
+        short_commission = short_num_cont * commission
+        long_commission = long_num_cont * commission
         profits[i][j] = short_balance + long_balance - initial_balance - total_commission
-        short_profits[i][j] = short_balance
-        long_profits[i][j] = long_balance
+        short_profits[i][j] = short_balance - initial_balance - short_commission
+        long_profits[i][j] = long_balance - initial_balance - long_commission
         num_liquidations_array[i][j] = num_liquidations
         total_commission_array[i][j] = total_commission
 
