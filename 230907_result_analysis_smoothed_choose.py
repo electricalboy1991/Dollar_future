@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load data from the Excel file
-df = pd.read_excel('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 0.1.xlsx')
+df = pd.read_excel('230910_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려.xlsx')
 # df = pd.read_csv('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 0.1.csv')
 
 # Extract data from columns
@@ -11,13 +11,13 @@ x_data = df['a']
 y_data = df['n']
 
 #원하는 position 분석 선택하기
-# z_data = df['short_profits']
-z_data = df['long_profits']
+z_data = df['short_profits']
+# z_data = df['long_profits']
 
 # Define the size of the averaging window
-window_size_x = 1.0002 # 1 + 단위 이동 거리
+window_size_x = 1.0001 # 1 + 단위 이동 거리
 window_size_y = 1.5 # 1 + 단위 이동 거리
-window_scale = 1 # 1 + 단위 이동 거리
+window_scale = 2 # 1 + 단위 이동 거리
 
 # Initialize an empty DataFrame for the averaged data
 averaged_df = pd.DataFrame()
