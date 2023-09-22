@@ -14,6 +14,8 @@ buffer = 0
 df = pd.read_csv('n분석_data.csv')
 df['datetime'] = pd.to_datetime(df['datetime'], format='%y-%m-%d %H:%M')
 df['datetime'] = df['datetime'] - pd.Timedelta(hours=1)
+df = df[df['datetime'] >= '2020-04-07 09:00:00']
+
 
 df['요일'] = df['datetime'].dt.day_name()
 weekend = ['Saturday', 'Sunday']
@@ -40,8 +42,7 @@ time_range2_start = pd.to_datetime('18:00').time()
 time_range2_end = pd.to_datetime('04:00').time()
 
 # 시간 범위에 해당하는 데이터 필터링
-filtered_df = filtered_day_df[(filtered_day_df['시간'] >= time_range1_start) & (filtered_day_df['시간'] <= time_range1_end) |
-                              (filtered_day_df['시간'] >= time_range2_start) | (filtered_day_df['시간'] <= time_range2_end)]
+target_df = filtered_day_df[(filtered_day_df['시간'] >= time_range1_start) & (filtered_day_df['시간'] <= time_range1_end)]
 
 
 # a는 청산 percent 값
@@ -49,7 +50,7 @@ a_range = np.arange(0.001, 0.010, 0.0001)
 # a_range = np.arange(0.01, 0.10, 0.01)
 
 # 포지션 잡는 Grid 기준
-n_range = np.arange(3, 15, 0.5)
+n_range = np.arange(3, 10, 0.5)
 
 # 수익 계산 함수
 def calculate_profit(a, n):
@@ -63,7 +64,7 @@ def calculate_profit(a, n):
     short_positions = []
     long_positions = []
 
-    for index, row in filtered_df.iterrows():
+    for index, row in target_df.iterrows():
         short_liquid_flag = 0
         long_liquid_flag = 0
         price = row['close']
@@ -204,7 +205,7 @@ data = {
 df_export = pd.DataFrame(data)
 
 # Export the DataFrame to an Excel filess
-df_export.to_excel('230910_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려.xlsx', index=False)
+df_export.to_excel('230921_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려.xlsx', index=False)
 
 # 3D plot
 fig = plt.figure()
@@ -219,39 +220,3 @@ ax.set_ylabel('Position grid')
 ax.set_zlabel('Profit')
 ax.set_title('Profit Simulation')
 plt.show()
-
-#
-# # 3D plot
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# N, A = np.meshgrid(n_range, a_range)
-# surf = ax.plot_surface(A, N, profits, cmap='viridis')
-#
-# # Label
-# ax.set_xlabel('Position liquidation percent')
-# ax.set_ylabel('Position grid')
-# ax.set_zlabel('Profit')
-# ax.set_title('Profit Simulation')
-#
-# # 마우스 클릭 이벤트 핸들러
-# def on_click(event):
-#     if event.inaxes == ax:
-#         x, y = event.xdata, event.ydata
-#         i = np.searchsorted(a_range, x)
-#         j = np.searchsorted(n_range, y)
-#
-#         # Check if the index is within bounds
-#         if 0 <= i < len(a_range) and 0 <= j < len(n_range):
-#             a_value = a_range[i]
-#             n_value = n_range[j]
-#             profit_value = profits[i][j]
-#             num_liquidations_value = num_liquidations_array[i][j]
-#             total_commission_value = total_commission_array[i][j]
-#             print(f'a: {a_value}, n: {n_value}, Profits: {profit_value}, Num Liquidations: {num_liquidations_value}, Total Commission: {total_commission_value}')
-#         else:
-#             print("Clicked outside the valid range")
-#
-# # 이벤트 연결
-# cid = fig.canvas.mpl_connect('button_press_event', on_click)
-#
-# plt.show()

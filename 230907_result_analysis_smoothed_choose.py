@@ -3,16 +3,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load data from the Excel file
-df = pd.read_excel('230910_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려.xlsx')
+df = pd.read_excel('230921_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려_daytime.xlsx')
 # df = pd.read_csv('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 0.1.csv')
 
 # Extract data from columns
 x_data = df['a']
 y_data = df['n']
-
-#원하는 position 분석 선택하기
 z_data = df['short_profits']
 # z_data = df['long_profits']
+
 
 # Define the size of the averaging window
 window_size_x = 1.0001 # 1 + 단위 이동 거리
@@ -63,13 +62,13 @@ ax.set_ylabel('Position grid')
 ax.set_zlabel(f'Averaged {target_column}')
 ax.set_title(f'Averaged {target_column} Simulation')
 
-# # Define the output Excel file path
-# output_excel_file = '230908_result_0.001, 0.010, 0.0002_3, 12, 0.5_short_long수수료고려_long분석_averaged.xlsx'
-#
-# # Export the averaged_df DataFrame to an Excel file
-# averaged_df.to_excel(output_excel_file, index=False)
-#
-# print(f"Data has been exported to {output_excel_file}")
-#
+# Define the output Excel file path
+output_excel_file = '230921_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려_daytime_averaged.xlsx'
+
+# Export the averaged_df DataFrame to an Excel file
+averaged_df.to_excel(output_excel_file, index=False)
+
+print(f"Data has been exported to {output_excel_file}")
+
 # Show the plot
 plt.show()

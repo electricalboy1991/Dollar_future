@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 # Load the Excel data into a DataFrame
 data = pd.read_excel('optimal_std_cross_validation.xlsx')
 data['index_std'] = 0.0  # Create a new column 'index_std' to store the calculated values
+shift_days = 5
+
+# 2행부터 760행까지 삭제// 2000년 이후를 보기 위함임
+data = data.drop(index=range(0, 759))
+data['new_index'] = range(0, len(data))
+data = data.set_index('new_index')
 
 # Define a function to calculate RMSE
 def calculate_rmse(y_true, y_pred):
@@ -18,8 +24,8 @@ best_x = None
 rmse_values = []  # List to store RMSE values for plotting
 x_values = []
 
-# Loop through different values of x
-for x in range(100, 600):
+# Loop through different values of x//x는 average 내는 기간
+for x in range(10, 100):
     k=0
     for i in range(x, len(data)):
         data.loc[x + k, 'index_std'] = data.loc[i, 'dollar index'] / (data.loc[i - x:i - 1, 'dollar index'].mean() / data.loc[i - x:i - 1, 'won PV'].mean())
@@ -27,7 +33,11 @@ for x in range(100, 600):
         k=k+1
     # data['index_std'] = data.apply(lambda row: data.loc[row.name - x:row.name]['dollar index'].mean() /
     #                                    data.loc[row.name - x:row.name]['won PV'].mean(), axis=1)
-    rmse = calculate_rmse(data.loc[data['index_std'] != 0]['won PV'], data.loc[data['index_std'] != 0]['index_std'])
+
+    #예측력 평가를 위해 shift_days만큼 shift
+    data['index_std_shift'] = data['index_std'].shift(shift_days)
+    data['index_std_shift'] = data['index_std_shift'].fillna(0)
+    rmse = calculate_rmse(data.loc[data['index_std_shift'] != 0]['won PV'], data.loc[data['index_std_shift'] != 0]['index_std_shift'])
     print(x,rmse)
 
     rmse_values.append(rmse)
