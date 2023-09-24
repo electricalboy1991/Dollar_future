@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import time
 from datetime import datetime
-
 """
 코드의 시간은 한국 시장 기준으로 변경해서 짬
 1200원 보다 처음 시작이 높은데서 시작 -> 청산하고 다시 바로 포지션 잡는 경우 존재 
@@ -66,16 +65,16 @@ final_condition = condition1 & condition2
 target_df = target_df[final_condition]
 
 # a는 청산 percent 값
-percent_start = 0.003
-percent_finish = 0.008
-percent_gap = 0.001
+percent_start = 0.001
+percent_finish = 0.010
+percent_gap = 0.0001
 a_range = np.arange(percent_start, percent_finish, percent_gap)
 
 # 포지션 잡는 Grid 기준
 n_start = 3
-n_finish = 35
-n_gap = 1
-n_range = np.arange(n_start, n_finish, n_gap)
+n_finish = 10
+n_gap = 0.5
+n_range = np.arange(3, 10, 0.5)
 
 # 수익 계산 함수
 def calculate_profit(a, n):
@@ -143,72 +142,37 @@ def calculate_profit(a, n):
                     short_liquid_flag=1
                     break
             if not short_positions and short_liquid_flag==0:
-                if datetime.hour >= 18 and datetime.hour <= 23:
-                    target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
-                    if target_tax_time in target_df['datetime'].values:
-                        tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                    else:
-                        closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                        tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                    tax_now =  ((price - tax_close_price) * contracts * tax_rate)
-                elif datetime.hour >= 0 and datetime.hour <= 4:
-                    one_day_before = datetime - pd.Timedelta(days=1)
-                    target_tax_time = pd.Timestamp(year=one_day_before.year, month=one_day_before.month, day=one_day_before.day, hour=15, minute=30)
-                    if target_tax_time in target_df['datetime'].values:
-                        tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                    else:
-                        closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                        tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                    tax_now =  ((price - tax_close_price) * contracts * tax_rate)
+                #야간 시장에서는 position 안잡기
+                if 18 <= datetime.hour <= 23:
+                     
+                    continue
+                elif 0 <= datetime.hour <= 4:
+                     
+                    continue
                 else:
-                    tax_now = 0
-
-                if tax_now > 0:
-                    short_balance = short_balance - tax_now
-                    tax_total = tax_total + tax_now
-                else:
-                    tax_total = tax_total + tax_now
-
-                target_price = round(price * (1 - a), 4)
-                short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : price})
-                total_num_cont = contracts + total_num_cont
-                # print("초기 숏 잡기",index,short_positions,long_positions)
+                    target_price = round(price * (1 - a), 4)
+                    short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : price})
+                    total_num_cont = contracts + total_num_cont
+                    # print("초기 숏 잡기",index,short_positions,long_positions)
             else:
                 #청산 후 바로 포지션 잡아버리는 거 막기 위함
                 if not short_positions:
                     pass
                 else:
                     if short_positions[-1]['short_target_price']/(1 - a) + n < price and price >GC+n/2  :
-                        # Create a new short position
-                        target_price = round(price * (1 - a), 4)
-                        short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : price})
-                        total_num_cont = contracts+total_num_cont
-                        # print("숏 잡기 추가",index,short_positions,long_positions)
+                        # 야간 시장에서는 position 안잡기
                         if 18 <= datetime.hour <= 23:
-                            target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
-                            if target_tax_time in target_df['datetime'].values:
-                                tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                            else:
-                                closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                                tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                            tax_now =  ((price-tax_close_price) * contracts * tax_rate)
+                             
+                            continue
                         elif 0 <= datetime.hour <= 4:
-                            one_day_before = datetime - pd.Timedelta(days=1)
-                            target_tax_time = pd.Timestamp(year=one_day_before.year, month=one_day_before.month, day=one_day_before.day, hour=15, minute=30)
-                            if target_tax_time in target_df['datetime'].values:
-                                tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                            else:
-                                closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                                tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                            tax_now =  ((price-tax_close_price) * contracts * tax_rate)
+                             
+                            continue
                         else:
-                            tax_now = 0
-
-                        if tax_now > 0:
-                            short_balance = short_balance - tax_now
-                            tax_total = tax_total + tax_now
-                        else:
-                            tax_total = tax_total + tax_now
+                            # Create a new short position
+                            target_price = round(price * (1 - a), 4)
+                            short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': price})
+                            total_num_cont = contracts + total_num_cont
+                            # print("숏 잡기 추가",index,short_positions,long_positions)
 
         if price < GC-buffer-n/2  or (price >= GC-buffer-n/2  and long_positions):
             for i, long_position in enumerate(long_positions):
@@ -250,88 +214,40 @@ def calculate_profit(a, n):
                     long_liquid_flag=1
                     break
             if not long_positions and long_liquid_flag==0:
-                target_price = round(price * (1 + a), 4)
-                long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : price})
-                total_num_cont = contracts + total_num_cont
-                # print("초기 롱 잡기",index,short_positions,long_positions)
                 if 18 <= datetime.hour <= 23:
-                    target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
-                    if target_tax_time in target_df['datetime'].values:
-                        tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                    else:
-                        closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                        tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                    tax_now =  -((price - tax_close_price) * contracts * tax_rate)
+                     
+                    continue
                 elif 0 <= datetime.hour <= 4:
-                    one_day_before = datetime - pd.Timedelta(days=1)
-                    target_tax_time = pd.Timestamp(year=one_day_before.year, month=one_day_before.month, day=one_day_before.day, hour=15, minute=30)
-                    if target_tax_time in target_df['datetime'].values:
-                        tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                    else:
-                        closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                        tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                    tax_now =  -((price - tax_close_price) * contracts * tax_rate)
+                     
+                    continue
                 else:
-                    tax_now = 0
-
-                if tax_now > 0:
-                    long_balance = long_balance - tax_now
-                    tax_total = tax_total + tax_now
-                else:
-                    tax_total = tax_total + tax_now
+                    target_price = round(price * (1 + a), 4)
+                    long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': price})
+                    total_num_cont = contracts + total_num_cont
+                    # print("초기 롱 잡기",index,short_positions,long_positions)
 
             else:
                 if not long_positions:
                     pass
                 else:
                     if long_positions[-1]['long_target_price'] / (1 + a) - n > price and price < GC-buffer-n/2 :
-                        # Create a new short position
-                        target_price = round(price * (1 + a), 4)
-                        long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : price})
-                        total_num_cont = contracts + total_num_cont
-                        # print("롱 잡기 추가",index,short_positions,long_positions)
                         if 18 <= datetime.hour <= 23:
-                            target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
-                            if target_tax_time in target_df['datetime'].values:
-                                tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                            else:
-                                closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                                tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                            tax_now =  -((price - tax_close_price) * contracts * tax_rate)
+                             
+                            continue
                         elif 0 <= datetime.hour <= 4:
-                            one_day_before = datetime - pd.Timedelta(days=1)
-                            target_tax_time = pd.Timestamp(year=one_day_before.year, month=one_day_before.month, day=one_day_before.day, hour=15, minute=30)
-                            if target_tax_time in target_df['datetime'].values:
-                                tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
-                            else:
-                                closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
-                                tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
-                            tax_now =  -((price - tax_close_price) * contracts * tax_rate)
+                             
+                            continue
                         else:
-                            tax_now = 0
-
-                        if tax_now > 0:
-                            long_balance = long_balance - tax_now
-                            tax_total = tax_total + tax_now
-                        else:
-                            tax_total = tax_total + tax_now
+                            # Create a new short position
+                            target_price = round(price * (1 + a), 4)
+                            long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': price})
+                            total_num_cont = contracts + total_num_cont
+                            # print("롱 잡기 추가",index,short_positions,long_positions)
 
     short_leftover = len(short_positions)
     long_leftover = len(long_positions)
 
     return short_balance, long_balance, liquidations, total_num_cont,short_num_cont,long_num_cont,short_leftover,long_leftover, tax_total
-
-
-# # a는 청산 percent 값
-# a_range = np.arange(0.001, 0.015, 0.001) # 1200원 기준 1.2원 ~ 18원
-# # 포지션 잡는 Grid 기준
-# n_range = np.arange(2, 20, 0.1)
-
-# # Parameter ranges
-# # Profit liquidation percent
-# a_range = np.arange(0.005, 0.008, 0.001)
-# # Get a position grid for every n distance
-# n_range = np.arange(4,5.5, 0.5)
 
 profits = np.zeros((len(a_range), len(n_range)))
 short_profits = np.zeros((len(a_range), len(n_range)))
@@ -392,9 +308,9 @@ data = {
 }
 
 df_export = pd.DataFrame(data)
-
 today = datetime.now().strftime('%Y%m%d')[2:]
-file_name = f'{today}_simulation_result_{percent_start},{percent_finish},{percent_gap}_{n_start},{n_finish},{n_gap}_wholeday.xlsx'
+file_name = f'{today}_simulation_result_{percent_start},{percent_finish},{percent_gap}_{n_start},{n_finish},{n_gap}_half.xlsx'
+
 df_export.to_excel(file_name, index=False)
 
 # 3D plot

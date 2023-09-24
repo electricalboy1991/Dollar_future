@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from datetime import datetime
 
 # Constants
 years = 3
@@ -46,10 +45,15 @@ target_df = filtered_day_df[(filtered_day_df['시간'] >= time_range1_start) & (
 
 
 # a는 청산 percent 값
-a_range = np.arange(0.001, 0.010, 0.0001)
-# a_range = np.arange(0.01, 0.10, 0.01)
+percent_start = 0.001
+percent_finish = 0.010
+percent_gap = 0.0001
+a_range = np.arange(percent_start, percent_finish, percent_gap)
 
 # 포지션 잡는 Grid 기준
+n_start = 3
+n_finish = 10
+n_gap = 0.5
 n_range = np.arange(3, 10, 0.5)
 
 # 수익 계산 함수
@@ -204,8 +208,9 @@ data = {
 
 df_export = pd.DataFrame(data)
 
-# Export the DataFrame to an Excel filess
-df_export.to_excel('230921_simulation_result_0.001, 0.010, 0.0001_3, 15, 0.5_short_long수수료고려.xlsx', index=False)
+today = datetime.now().strftime('%Y%m%d')[2:]
+file_name = f'{today}_simulation_result_{percent_start},{percent_finish},{percent_gap}_{n_start},{n_finish},{n_gap}_daytime.xlsx'
+df_export.to_excel(file_name, index=False)
 
 # 3D plot
 fig = plt.figure()
