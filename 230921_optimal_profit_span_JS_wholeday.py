@@ -5,13 +5,14 @@ from datetime import time
 from datetime import datetime
 
 """
-코드의 시간은 한국 시장 기준으로 변경해서 짬
+코드의 시간은 한국 시장 기준으로 변경해서 짬 -> twelve data가 실제 한국 시장보다 1시간 빠름
 1200원 보다 처음 시작이 높은데서 시작 -> 청산하고 다시 바로 포지션 잡는 경우 존재 
 250만원 공제는 고려 안함
 15:30 시간이 없어서, 가장가까운 시간으로 하는 데, 10시 막 이런 것들이 있음
 \\\\\//\\\\ 쭉 내려와서 롱 포지션 많이 쌓았다가 -> 쭉 밀고 올라서 청산했는데, 다시 내려가서 포지션 잡을 때 -> 이건 야간 청산 기준으로 손실로 잡힐 수 있음 -> 이거 세금에서 빼줌 
 -> 이거 한번 확인할 필요있음
 야간에 거래량이 감소하잖아 -> 이걸 고려해줘야 할 것 같은데... 
+세금 11% 에서 패널티를 좀 주긴 해야함. -> 거래량이 뒷받침이 안되니까. 하지만, 우리는 현물 rate으로 하기 때문에, 시뮬레이션에서는 청산했는데, 실제 야간에서는 거래 체결이 안된 경우 있을 수 있음.
 """
 
 # Constants
@@ -66,15 +67,21 @@ final_condition = condition1 & condition2
 target_df = target_df[final_condition]
 
 # a는 청산 percent 값
-percent_start = 0.003
-percent_finish = 0.008
-percent_gap = 0.001
+percent_start = 0.001
+percent_finish = 0.010
+percent_gap = 0.0001
 a_range = np.arange(percent_start, percent_finish, percent_gap)
+
+# b는 청산 percent 값
+b_percent_start = 0.001
+b_percent_finish = 0.010
+b_percent_gap = 0.0001
+b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
 
 # 포지션 잡는 Grid 기준
 n_start = 3
-n_finish = 35
-n_gap = 1
+n_finish = 10
+n_gap = 0.5
 n_range = np.arange(n_start, n_finish, n_gap)
 
 # 수익 계산 함수
@@ -90,6 +97,8 @@ def calculate_profit(a, n):
     short_positions = []
     long_positions = []
     tax_total = 0
+    tax_short_total = 0
+    tax_long_total = 0
 
     for index, row in target_df.iterrows():
         short_liquid_flag = 0
@@ -106,7 +115,7 @@ def calculate_profit(a, n):
             # Short position, short position 들어가있는거 다 돌아서 loop돌기
             for i, short_position in enumerate(short_positions):
                 if price <= short_position['short_target_price']:
-                    profit = short_position['short_target_price']*(a/(1-a)) * contracts
+                    profit = (short_position['price'] - price) * contracts
                     if datetime.hour >= 18 and datetime.hour <= 23:
                         target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
                         # tax_close_price = target_df[target_df['datetime'] == target_tax_time]['close'].iloc[0]
@@ -213,7 +222,7 @@ def calculate_profit(a, n):
         if price < GC-buffer-n/2  or (price >= GC-buffer-n/2  and long_positions):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
-                    profit = long_position['long_target_price']*(a/(a+1)) * contracts
+                    profit = (price - long_position['price']) * contracts
                     if 18 <= datetime.hour <= 23:
                         target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
                         if target_tax_time in target_df['datetime'].values:
