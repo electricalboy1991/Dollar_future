@@ -72,11 +72,7 @@ percent_finish = 0.010
 percent_gap = 0.0001
 a_range = np.arange(percent_start, percent_finish, percent_gap)
 
-# b는 청산 percent 값
-b_percent_start = 0.001
-b_percent_finish = 0.010
-b_percent_gap = 0.0001
-b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
+
 
 # 포지션 잡는 Grid 기준
 n_start = 3
