@@ -222,7 +222,7 @@ def calculate_profit(a,b,n):
                 if not short_positions:
                     pass
                 else:
-                    if short_positions[-1]['short_target_price']/(1 - a) + n < price and price >GC+n/2  :
+                    if short_positions[-1]['price'] + n < price and price >GC+n/2  :
                         # Create a new short position
                         target_price = round(price * (1 - a), 4)
                         short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : price})
@@ -355,7 +355,7 @@ def calculate_profit(a,b,n):
                 if not long_positions:
                     pass
                 else:
-                    if long_positions[-1]['long_target_price'] / (1 + a) - n > price and price < GC-buffer-n/2 :
+                    if long_positions[-1]['price'] - n > price and price < GC-buffer-n/2 :
                         # Create a new short position
                         target_price = round(price * (1 + a), 4)
                         long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : price})
