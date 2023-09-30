@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load data from the Excel file
-file_name = '230925_simulation_result_0.003,0.008,0.001_3,35,1_wholeday'
+file_name = '230923_simulation_result_0.001,0.010,0.0001_3,10,0.5_wholeday'
 
 df = pd.read_excel(file_name+'.xlsx')
 # df = pd.read_csv('230906_simulation_result_0.001, 0.009, 0.001_2, 20, 0.1.csv')
@@ -13,6 +13,7 @@ x_data = df['a']
 y_data = df['n']
 z_data = df['short_profits']
 # z_data = df['long_profits']
+last_word = file_name.rsplit('_', 1)[-1]
 
 parts = file_name.split(',')
 # 2번째 쉼표 뒤의 값을 가져옵니다.
@@ -28,7 +29,7 @@ average_distance = 0
 # Define the size of the averaging window
 window_size_x = 1+value1 # 1 + 단위 이동 거리
 window_size_y = 1+value2 # 1 + 단위 이동 거리
-window_scale = average_distance # 1 + 단위 이동 거리
+window_scale = average_distance # 단위 이동 거리
 
 # Initialize an empty DataFrame for the averaged data
 averaged_df = pd.DataFrame()
@@ -71,8 +72,8 @@ surf = ax.plot_trisurf(averaged_df['a'], averaged_df['n'], averaged_df[target_co
 # Set labels for each axis
 ax.set_xlabel('Position liquidation percent')
 ax.set_ylabel('Position grid')
-ax.set_zlabel(f'Averaged {target_column}')
-ax.set_title(f'Averaged {target_column} Simulation')
+ax.set_zlabel(f'Averaged {target_column}_{last_word}')
+ax.set_title(f'Averaged {target_column}_{last_word} Simulation')
 
 # Define the output Excel file path
 output_excel_file = file_name+'_averaged.xlsx'
