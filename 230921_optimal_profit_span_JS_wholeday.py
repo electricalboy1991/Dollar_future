@@ -23,6 +23,19 @@ from scipy.interpolate import griddata
 # Constants
 
 # a는 청산 percent 값
+percent_start = 0.002
+percent_finish = 0.006
+percent_gap = 0.0005
+a_range = np.arange(percent_start, percent_finish, percent_gap)
+
+# b는 청산 percent 값
+b_percent_start = 0.002
+b_percent_finish = 0.007
+b_percent_gap = 0.0005
+b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
+
+"""
+# a는 청산 percent 값
 percent_start = 0.0042
 percent_finish = 0.0054
 percent_gap = 0.0001
@@ -34,11 +47,13 @@ b_percent_finish = 0.0064
 b_percent_gap = 0.0001
 b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
 
+"""
+
 # 포지션 잡는 Grid 기준
-n_start = 3
-n_finish = 8
-n_gap = 1
-n_range = np.arange(n_start, n_finish, n_gap)
+n_p_start = 0.0025
+n_p_finish = 0.0070
+n_p_gap = 0.0005
+n_p_range = np.arange(n_p_start, n_p_finish, n_p_gap)
 
 years = 3
 minutes_per_day = 24 * 60
@@ -91,10 +106,9 @@ final_condition = condition1 & condition2
 target_df = target_df[final_condition]
 
 # 수익 계산 함수
-def calculate_profit(a,b,n):
+def calculate_profit(a,b,n_p):
     short_balance = initial_balance
     long_balance = initial_balance
-    contracts = n  # c is fixed to n
     profit = 0
     liquidations = 0 # 청산 횟수
     total_num_cont = 0 # 수수료 계산을 위한 전체 계약 수
@@ -111,13 +125,14 @@ def calculate_profit(a,b,n):
         long_liquid_flag = 0
         tax_now = 0
         price = row['close']
+        contracts = n_p*price  # c is fixed to n
         price_open = row['open']
         datetime = row['datetime']
         # print(index,price)
 
         # n 가 있는 이유는 n이 10이랑 1일 때랑 비교 시 단순 1200 기준으로 했을 때 문제가 생기기 때문
         # 1201에서 n 10이여서 short 10개 치는 거랑, n 1이여서 short 1개 치는 거 비교하면 당연히 short 10개 치는 게 수익 많이 나오겠지
-        if price > GC +n/2  or (price <= GC+n/2  and short_positions):
+        if price > GC +n_p*price/2  or (price <= GC+n_p*price/2  and short_positions):
 
             # Short position, short position 들어가있는거 다 돌아서 loop돌기
             for i, short_position in enumerate(short_positions):
@@ -234,21 +249,21 @@ def calculate_profit(a,b,n):
                     pass
                 else:
                     #아래 조건만 만족하면 무조건 진입임
-                    if short_positions[-1]['price'] + n < price and price >GC+n/2  :
+                    if short_positions[-1]['price'] + n_p*price < price and price >GC+n_p*price/2  :
                         #널 뛰기 진입이 가능 -> 해당 경우 고려
                         if (datetime.hour == 9 and datetime.minute == 0) or (datetime.hour == 18 and datetime.minute == 0):
                             #널 뛰기 진입 가능하며, open가 부터 이미 진입 가격을 넘어버림 -> price_open로 진입
-                            if short_positions[-1]['price'] + n < price_open:
+                            if short_positions[-1]['price'] + n_p*price < price_open:
                                 target_price = round(price_open * (1 - a), 4)
                                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': price_open})
                             else:
-                                target_price = round((short_positions[-1]['price'] + n) * (1 - a), 4)
-                                short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': (short_positions[-1]['price'] + n)})
+                                target_price = round((short_positions[-1]['price'] + n_p*price) * (1 - a), 4)
+                                short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': (short_positions[-1]['price'] + n_p*price)})
                         #널뛰기 진입이 불가능 -> 그래서  "short_positions[-1]['price'] + n"
                         else:
                             # 나는 지정가로 그리드 매매 하기 때문에, 딱 그 그리드 경계에서 매도 하는 거임. "그래서  short_positions[-1]['price'] + n"
-                            target_price = round((short_positions[-1]['price'] + n) * (1 - a), 4)
-                            short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : (short_positions[-1]['price'] + n)})
+                            target_price = round((short_positions[-1]['price'] + n_p*price) * (1 - a), 4)
+                            short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : (short_positions[-1]['price'] + n_p*price)})
                         total_num_cont = contracts+total_num_cont
                         # print("숏 잡기 추가",index,short_positions,long_positions)
                         if 18 <= datetime.hour <= 23:
@@ -276,7 +291,7 @@ def calculate_profit(a,b,n):
                             tax_total = tax_total + tax_now
                             tax_short_total = tax_short_total + tax_now
 
-        if price < GC-buffer-n/2  or (price >= GC-buffer-n/2  and long_positions):
+        if price < GC-buffer-n_p*price/2  or (price >= GC-buffer-n_p*price/2  and long_positions):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
                     if 18 <= datetime.hour <= 23:
@@ -380,21 +395,21 @@ def calculate_profit(a,b,n):
                 if not long_positions:
                     pass
                 else:
-                    if long_positions[-1]['price'] - n > price and price < GC-buffer-n/2 :
+                    if long_positions[-1]['price'] - n_p*price > price and price < GC-buffer-n_p*price/2 :
                         # 널 뛰기 진입이 가능 -> 해당 경우 고려
                         if (datetime.hour == 9 and datetime.minute == 0) or (datetime.hour == 18 and datetime.minute == 0):
                             # 시장이 새로 열리자 마자 price_open가격이 그리드 기준을 넘어섬 -> 널뛰기 진입 -> price_open가로 진입
-                            if long_positions[-1]['price'] - n > price_open:
+                            if long_positions[-1]['price'] - n_p*price > price_open:
                                 target_price = round(price_open * (1 + a), 4)
                                 long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': price_open})
                             # close 가격은 기준 그리드를 넘어서서 포지션을 잡아야하는데, open은 만족 x -> 기존 그리드 대로 포지션 잡기
                             else:
-                                target_price = round((long_positions[-1]['price'] - n) * (1 + a), 4)
-                                long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': (long_positions[-1]['price'] - n)})
+                                target_price = round((long_positions[-1]['price'] - n_p*price) * (1 + a), 4)
+                                long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': (long_positions[-1]['price'] - n_p*price)})
                         else:
                             # Create a new short position
-                            target_price = round((long_positions[-1]['price'] - n) * (1 + a), 4)
-                            long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : (long_positions[-1]['price'] - n)})
+                            target_price = round((long_positions[-1]['price'] - n_p*price) * (1 + a), 4)
+                            long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : (long_positions[-1]['price'] - n_p*price)})
                         total_num_cont = contracts + total_num_cont
 
                         if 18 <= datetime.hour <= 23:
@@ -427,16 +442,16 @@ def calculate_profit(a,b,n):
 
     return short_balance, long_balance, liquidations, total_num_cont,short_num_cont,long_num_cont,short_leftover,long_leftover, tax_total, tax_short_total, tax_long_total
 
-profits = np.zeros((len(a_range), len(b_range), len(n_range)))
-short_profits = np.zeros((len(a_range), len(b_range), len(n_range)))
-long_profits = np.zeros((len(a_range), len(b_range), len(n_range)))
-num_liquidations_array = np.zeros((len(a_range), len(b_range), len(n_range)))
-total_commission_array = np.zeros((len(a_range), len(b_range), len(n_range)))
+profits = np.zeros((len(a_range), len(b_range), len(n_p_range)))
+short_profits = np.zeros((len(a_range), len(b_range), len(n_p_range)))
+long_profits = np.zeros((len(a_range), len(b_range), len(n_p_range)))
+num_liquidations_array = np.zeros((len(a_range), len(b_range), len(n_p_range)))
+total_commission_array = np.zeros((len(a_range), len(b_range), len(n_p_range)))
 
 # Create empty lists to store values
 a_values = []
 b_values = []
-n_values = []
+n_p_values = []
 num_liquidations_values = []
 total_commission_values = []
 short_profit_values = []
@@ -450,11 +465,11 @@ tax_long_total_values = []
 
 # a,n에 따라 수익을 계산하기 위한 이중 for문
 for i, a in enumerate(a_range):
-    for j, n in enumerate(n_range):
+    for j, n_p in enumerate(n_p_range):
         for k, b in enumerate(b_range):
             # if b < a:
             #     continue
-            short_balance, long_balance, num_liquidations, total_num_cont,short_num_cont,long_num_cont,short_leftover,long_leftover,tax_total, tax_short_total, tax_long_total = calculate_profit(a,b, n)
+            short_balance, long_balance, num_liquidations, total_num_cont,short_num_cont,long_num_cont,short_leftover,long_leftover,tax_total, tax_short_total, tax_long_total = calculate_profit(a,b, n_p)
             total_commission = total_num_cont * commission
             short_commission = short_num_cont * commission
             long_commission = long_num_cont * commission
@@ -465,13 +480,13 @@ for i, a in enumerate(a_range):
             total_commission_array[i][k][j] = total_commission
 
 
-            print(round(a,4),round(b,4), n,num_liquidations,round(total_commission,1),round(short_profits[i][k][j],1),round(long_profits[i][k][j],1), round(profits[i][k][j],1),
+            print(round(a,4),round(b,4), n_p,num_liquidations,round(total_commission,1),round(short_profits[i][k][j],1),round(long_profits[i][k][j],1), round(profits[i][k][j],1),
                   short_leftover,long_leftover,round(tax_total,1), round(tax_short_total,1), round(tax_long_total,1))
 
             # Append values to lists
             a_values.append(a)
             b_values.append(b)
-            n_values.append(n)
+            n_p_values.append(n_p)
             num_liquidations_values.append(num_liquidations)
             total_commission_values.append(total_commission)
             short_profit_values.append(short_profits[i][k][j])
@@ -486,7 +501,7 @@ for i, a in enumerate(a_range):
 data = {
     'a': a_values,
     'b': b_values,
-    'n': n_values,
+    'n_p': n_p_values,
     'num_liquidations': num_liquidations_values,
     'total_commission': total_commission_values,
     'short_profits': short_profit_values,
@@ -502,7 +517,7 @@ data = {
 df_export = pd.DataFrame(data)
 
 today = datetime.now().strftime('%Y%m%d')[2:]
-file_name = f'{today}_simulation_result_{percent_start},{percent_finish},{percent_gap}_{b_percent_start},{b_percent_finish},{b_percent_gap}_{n_start},{n_finish},{n_gap}_wholeday.xlsx'
+file_name = f'{today}_simulation_result_{percent_start},{percent_finish},{percent_gap}_{b_percent_start},{b_percent_finish},{b_percent_gap}_{n_p_start},{n_p_finish},{n_p_gap}_wholeday.xlsx'
 df_export.to_excel(file_name, index=False)
 
 # 엑셀 파일에서 데이터를 불러옵니다
