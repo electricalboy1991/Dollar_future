@@ -1,0 +1,152 @@
+//@version=5
+
+//------------------------------------------------------------------------------------------------<>
+//      This source code is subject to the terms of the Mozilla Public License 2.0 
+//      https://mozilla.org/MPL/2.0/ 
+//      ©mvs1231 || xxattaxx || DisDev
+//      Updated 01/17/2022: Pinescript v5: 
+//          Price Selectors--Converted color transparences to prevent deprecation warning
+indicator('Grid Bot Simulator', shorttitle='GridBotDir', overlay=true)
+//-----<Inputs>-----------------------------------------------------------------------------------<> 
+UpperLimit = input.price(1200.0, 'Upper Limit', confirm=true)
+LowerLimit = input.price(1000.0, 'Lower Limit', confirm=true)
+No_Grids = input(40, 'Number of Grids(10)') + 1
+Dir = input.string('neutral', 'Market Direction', options=['up', 'neutral', 'down'])
+SS = input.string('small', 'Signal Size', options=['small', 'large'])
+ShowGrids = input(true, 'Show Grids')
+HighLight = input(true, 'Highlight Trade Zones')
+ShowCurrent = input(false, 'Show Only Current Grids')
+Extremes = input(true, 'High/Low for signals')
+//-----<Variables>--------------------------------------------------------------------------------<>
+LastSignal = 0
+LastSignal_Index = 0
+LastSignal_Time = time
+SignalLine = 0.0
+CurrentGrid = 0.0
+Buy = false
+Sell = false
+Direction = Dir == 'up' ? 1 : Dir == 'down' ? -1 : 0
+//-----<Colors>-----------------------------------------------------------------------------------<>
+RedGrid = color.new(color.red, 50)
+GreenGrid = color.new(color.green, 40)
+Crimson = #DC143C
+LimeGreen = #32CD32
+//-----<Calculate Grids>--------------------------------------------------------------------------<>
+GridRange = UpperLimit - LowerLimit
+GridInterval = GridRange / (No_Grids - 1)
+//-----<Grid Array>-------------------------------------------------------------------------------<>
+a_grid = array.new_float(No_Grids)
+for x = 0 to No_Grids - 1 by 1
+    //array에 grid 값들 하나씩 넣어줌 
+    array.set(a_grid, x, LowerLimit + GridInterval * x)
+//-----<Get Array Function>-----------------------------------------------------------------------<>
+Get_Array_Values(ArrayName, index) =>
+    // 특정 인덱스에 있는 값을 추출하는 함수임
+    value = array.get(ArrayName, index)
+    value
+//-----<Calculate Signals>------------------------------------------------------------------------<>
+//이 함수는 구매 가능한 라인의 인덱스를 계산하고 반환
+//그리드 내의 각 값에 대해 주어진 조건에 따라 최적의 구매 지점을 찾음
+//Extremes 변수가 참이면(이전 코드에서 input(true, 'High/Low for signals')로 설정됨), 가장 최근의 봉의 고점이 구매값보다 크고 저점이 구매값 이하인지 확인합니다.
+//Extremes 변수가 거짓이면, 가장 최근의 봉의 종가가 구매값 사이에 있는지 확인합니다.
+Get_BuyLine_Index() =>
+    Index = 0
+    BuyValue = 0.0
+    // 그리드를 하나씩 서치해봄
+    for x = 0 to No_Grids - 1 by 1
+        BuyValue := LowerLimit + GridInterval * x
+        if Extremes
+            Index := high[1] > BuyValue and low <= BuyValue ? x : Index
+            Index
+        else
+            Index := close[1] > BuyValue and close <= BuyValue ? x : Index
+            Index
+//판매 가능한 라인의 인덱스를 계산하고 반환
+//주어진 조건에 따라 최적의 판매 지점을 찾음
+Get_SellLine_Index() =>
+    Index = 0
+    SellValue = 0.0
+    for x = 0 to No_Grids - 1 by 1
+        SellValue := LowerLimit + GridInterval * x
+        if Extremes
+            Index := low[1] < SellValue and high >= SellValue ? x : Index
+            Index
+        else
+            Index := close[1] < SellValue and close >= SellValue ? x : Index
+            Index
+
+// 위에서 정의한 함수들을 사용하여 구매 및 판매 라인의 인덱스를 계산하고 변수에 저장합니다.
+BuyLine_Index = Get_BuyLine_Index()
+SellLine_Index = Get_SellLine_Index()
+//-----<Signals>----------------------------------------------------------------------------------<>
+
+//BuyLine_Index와 SellLine_Index 값이 0보다 큰 경우, 해당하는 구매(Buy) 또는 판매(Sell) 신호를 활성화합니다.
+
+Buy := BuyLine_Index > 0 ? true : Buy
+Sell := SellLine_Index > 0 ? true : Sell
+//No repeat trades at current level      
+//현재 그리드 레벨에서 연속된 거래를 방지하기 위한 로직                                                                               
+if Extremes
+    Buy := low >= SignalLine[1] - GridInterval ? false : Buy
+    Sell := high <= SignalLine[1] + GridInterval ? false : Sell
+    Sell
+else
+    Buy := close >= SignalLine[1] - GridInterval ? false : Buy
+    Sell := close <= SignalLine[1] + GridInterval ? false : Sell
+    Sell
+//No trades outside of grid limits
+Buy := close >= UpperLimit ? false : Buy
+Buy := close < LowerLimit ? false : Buy
+Sell := close <= LowerLimit ? false : Sell
+Sell := close > UpperLimit ? false : Sell
+//Direction Filter (skip one signal if against market direction)
+Buy := Direction == -1 and low >= SignalLine[1] - GridInterval * 2 ? false : Buy
+Sell := Direction == 1 and high <= SignalLine[1] + GridInterval * 2 ? false : Sell
+//-----<Trackers>---------------------------------------------------------------------------------<>
+//최근의 거래 신호, 그 신호의 인덱스, 그리고 그 신호의 시간을 추적
+LastSignal := Buy ? 1 : Sell ? -1 : LastSignal[1]
+LastSignal_Index := Buy ? BuyLine_Index : Sell ? SellLine_Index : LastSignal_Index[1]
+LastSignal_Time := Buy or Sell ? time : LastSignal_Time[1]
+SignalLine := LowerLimit + GridInterval * LastSignal_Index
+//-----<Plot Grids>-------------------------------------------------------------------------------<>
+// 가까운 그리드가 현재 가격보다 높으면 빨간색, 낮으면 초록색으로 표시
+for i = 1 to No_Grids - 1 by 1
+    Array_Value = Get_Array_Values(a_grid, i)
+    ClosestGrid = Array_Value - close
+    color linecolor = ClosestGrid > 0 ? RedGrid : ClosestGrid < 0 ? GreenGrid : na
+    linecolor := i == LastSignal_Index ? na : linecolor
+    // ShowGrids는 사용자가 입력한 변수
+    if ShowGrids
+        // ShowCurrent가 참인 경우 현재 신호에 가장 가까운 두 개의 그리드 라인만 표시되며, 그렇지 않은 경우 모든 그리드 라인이 표시됩니다.
+        if ShowCurrent
+            LineAbove = line.new(x1=LastSignal_Time, y1=SignalLine + GridInterval, x2=time + 1000000, y2=SignalLine + GridInterval, color=color.red, width=1, extend=extend.left, xloc=xloc.bar_time)
+            LineBelow = line.new(x1=LastSignal_Time, y1=SignalLine - GridInterval, x2=time + 1000000, y2=SignalLine - GridInterval, color=color.green, width=1, extend=extend.left, xloc=xloc.bar_time)
+            LineBelow
+        else
+            color colCurrent = LastSignal == 1 ? color.new(color.green, 95) : color.new(color.red, 95)
+            GridLines = line.new(x1=time, y1=Array_Value, x2=time[1], y2=Array_Value, color=linecolor, width=1, extend=extend.right, xloc=xloc.bar_time)
+            //draw line before latest signal
+            CurrentLine = line.new(x1=LastSignal_Time, y1=SignalLine, x2=LastSignal_Time - 100000, y2=SignalLine, color=colCurrent, width=1, extend=extend.right, xloc=xloc.bar_time)
+            CurrentLine
+
+// 상한(UpperLimit) 및 하한(LowerLimit)을 그립니다. 현재 가격이 상한을 초과하면 초록색, 하한 이하면 빨간색으로 표시됩니다.
+UL = ShowGrids and not ShowCurrent
+plot(UL ? UpperLimit : na, color=close >= UpperLimit ? color.green : color.red, linewidth=3)
+plot(UL ? LowerLimit : na, color=close <= LowerLimit ? color.red : color.green, linewidth=3)
+//Lines One Above & One Below
+LineAbove = SignalLine == UpperLimit ? SignalLine : SignalLine + GridInterval
+LineBelow = SignalLine == LowerLimit ? SignalLine : SignalLine - GridInterval
+a = plot(LineAbove, color=color.new(color.red, 100), style=plot.style_circles)
+b = plot(LineBelow, color=color.new(color.green, 100), style=plot.style_circles)
+boxColor = LastSignal == -1 ? color.new(color.green, 90) : color.new(color.red, 90)
+boxColor := HighLight ? boxColor : na
+fill(a, b, color=color.new(boxColor, 90))
+//-----<Plot Signals>-----------------------------------------------------------------------------<>
+plotchar(Buy and SS == 'small', 'Buy', color=color.new(LimeGreen, 0), size=size.tiny, location=location.belowbar, char='▲')
+plotchar(Sell and SS == 'small', 'Sell', color=color.new(Crimson, 0), size=size.tiny, location=location.abovebar, char='▼')
+plotchar(Buy and SS == 'large', 'Buy', color=color.new(LimeGreen, 0), size=size.large, location=location.belowbar, char='▲')
+plotchar(Sell and SS == 'large', 'Sell', color=color.new(Crimson, 0), size=size.large, location=location.abovebar, char='▼')
+//-----<Alerts>-----------------------------------------------------------------------------------<>
+alertcondition(condition=Buy, title='buy', message='buy')
+alertcondition(condition=Sell, title='sell', message='sell')
+

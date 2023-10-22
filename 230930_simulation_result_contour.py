@@ -5,7 +5,7 @@ from scipy.interpolate import griddata
 import mplcursors
 
 # Specify the file path (the actual path to the Excel file must be entered here)
-file_path = 'C:/Users/world/PycharmProjects/Dollar_future/231002_simulation_result_0.0042,0.0054,0.0001_0.0045,0.0064,0.0001_3,8,1_wholeday.xlsx'
+file_path = 'C:/Users/world/PycharmProjects/Dollar_future/231011_simulation_result_0.002,0.006,0.0005_0.002,0.007,0.0005_0.0025,0.007,0.0005_wholeday.xlsx'
 
 # Load data from Excel file
 data = pd.read_excel(file_path)
