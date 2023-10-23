@@ -24,12 +24,12 @@ from scipy.interpolate import griddata
 
 # a는 청산 percent 값
 percent_start = 0.002
-percent_finish = 0.006
+percent_finish = 0.007
 percent_gap = 0.0005
 a_range = np.arange(percent_start, percent_finish, percent_gap)
 
 # b는 청산 percent 값
-b_percent_start = 0.002
+b_percent_start = 0.0025
 b_percent_finish = 0.007
 b_percent_gap = 0.0005
 b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
@@ -50,8 +50,8 @@ b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
 """
 
 # 포지션 잡는 Grid 기준
-n_p_start = 0.0025
-n_p_finish = 0.0070
+n_p_start = 0.005
+n_p_finish = 0.0055
 n_p_gap = 0.0005
 n_p_range = np.arange(n_p_start, n_p_finish, n_p_gap)
 
@@ -125,14 +125,22 @@ def calculate_profit(a,b,n_p):
         long_liquid_flag = 0
         tax_now = 0
         price = row['close']
-        contracts = n_p*price  # c is fixed to n
+        contracts = a*price  # c is fixed to n
         price_open = row['open']
         datetime = row['datetime']
+
         # print(index,price)
+        if 18 <= datetime.hour <= 23:
+            n_p = b
+        elif 0 <= datetime.hour <= 5:
+            n_p = b
+        else:
+            n_p = a
 
         # n 가 있는 이유는 n이 10이랑 1일 때랑 비교 시 단순 1200 기준으로 했을 때 문제가 생기기 때문
         # 1201에서 n 10이여서 short 10개 치는 거랑, n 1이여서 short 1개 치는 거 비교하면 당연히 short 10개 치는 게 수익 많이 나오겠지
-        if price > GC +n_p*price/2  or (price <= GC+n_p*price/2  and short_positions):
+        # 여기서 a 를 쓰는 이유는, 주야 상관 없이 GC 기준 간격을 띄어 놓는 크기는 동일하게 두기 위함, 그리고 이거는 GC 바로 근처에 있을때만 영향이 크지 한참 벗어나서는 상관이 없음
+        if price > GC +a*price/2  or (price <= GC+a*price/2  and short_positions):
 
             # Short position, short position 들어가있는거 다 돌아서 loop돌기
             for i, short_position in enumerate(short_positions):
@@ -249,14 +257,17 @@ def calculate_profit(a,b,n_p):
                     pass
                 else:
                     #아래 조건만 만족하면 무조건 진입임
+                    #야간 기준에는 n_p가 b로 바뀌면서 더 큰 범위로 진입
                     if short_positions[-1]['price'] + n_p*price < price and price >GC+n_p*price/2  :
                         #널 뛰기 진입이 가능 -> 해당 경우 고려
                         if (datetime.hour == 9 and datetime.minute == 0) or (datetime.hour == 18 and datetime.minute == 0):
                             #널 뛰기 진입 가능하며, open가 부터 이미 진입 가격을 넘어버림 -> price_open로 진입
                             if short_positions[-1]['price'] + n_p*price < price_open:
+                                #주야 상관 없이, 일단 진입시 target_price는 a기준으로 함, 이 후 청산할 때 이게 야간에 청산이라면 야간에 맞게 가지고 감
                                 target_price = round(price_open * (1 - a), 4)
                                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': price_open})
                             else:
+                                # 주야 상관 없이, 일단 진입시 target_price는 a기준으로 함, 이 후 청산할 때 이게 야간에 청산이라면 야간에 맞게 가지고 감
                                 target_price = round((short_positions[-1]['price'] + n_p*price) * (1 - a), 4)
                                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': (short_positions[-1]['price'] + n_p*price)})
                         #널뛰기 진입이 불가능 -> 그래서  "short_positions[-1]['price'] + n"
@@ -291,7 +302,7 @@ def calculate_profit(a,b,n_p):
                             tax_total = tax_total + tax_now
                             tax_short_total = tax_short_total + tax_now
 
-        if price < GC-buffer-n_p*price/2  or (price >= GC-buffer-n_p*price/2  and long_positions):
+        if price < GC-buffer-a*price/2  or (price >= GC-buffer-a*price/2  and long_positions):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
                     if 18 <= datetime.hour <= 23:
