@@ -5,13 +5,13 @@ from scipy.interpolate import griddata
 import mplcursors
 
 # Specify the file path (the actual path to the Excel file must be entered here)
-file_path = 'C:/Users/world/PycharmProjects/Dollar_future/231011_simulation_result_0.002,0.006,0.0005_0.002,0.007,0.0005_0.0025,0.007,0.0005_wholeday.xlsx'
+file_path = '231024_simulation_result_0.002,0.007,0.0005_0.0025,0.007,0.0005_0.005,0.0055,0.0005_wholeday.xlsx'
 
 # Load data from Excel file
 data = pd.read_excel(file_path)
 
 # Set the profit type here
-profit_type = 'long_profits'  # Change this to 'short_profits' or 'long_profits' or 'total_profit' as needed
+profit_type = 'short_profits'  # Change this to 'short_profits' or 'long_profits' or 'total_profit' as needed
 
 # Group the data according to a and b and calculate the average of the specified profit type
 grouped_data = data.groupby(['a', 'b'])[profit_type].mean().reset_index()
