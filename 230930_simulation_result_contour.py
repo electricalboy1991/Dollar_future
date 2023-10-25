@@ -5,13 +5,13 @@ from scipy.interpolate import griddata
 import mplcursors
 
 # Specify the file path (the actual path to the Excel file must be entered here)
-file_path = '231024_simulation_result_0.002,0.007,0.0005_0.0025,0.007,0.0005_0.005,0.0055,0.0005_wholeday.xlsx'
+file_path = '231025_simulation_result_0.0035,0.0075,0.0001_0.0055,0.0075,0.0001_0.005,0.0055,0.0005_wholeday.xlsx'
 
 # Load data from Excel file
 data = pd.read_excel(file_path)
 
 # Set the profit type here
-profit_type = 'short_profits'  # Change this to 'short_profits' or 'long_profits' or 'total_profit' as needed
+profit_type = 'short_profits'  # Change this as needed
 
 # Group the data according to a and b and calculate the average of the specified profit type
 grouped_data = data.groupby(['a', 'b'])[profit_type].mean().reset_index()
@@ -27,7 +27,7 @@ z_grid = griddata((x, y), z, (x_grid, y_grid), method='cubic')
 
 # Draw a 2D contour plot
 fig, ax = plt.subplots(figsize=(10, 7))
-contour = ax.contourf(x_grid, y_grid, z_grid, cmap='viridis', levels=100)  # Increased levels for finer color distinction
+contour = ax.contourf(x_grid, y_grid, z_grid, cmap='viridis', levels=100)
 plt.colorbar(contour, ax=ax, label=profit_type)
 
 # Scatter the original data points on top of the contour plot
@@ -38,21 +38,32 @@ ax.set_xlabel('a')
 ax.set_ylabel('b')
 ax.set_title(f'2D Contour plot of {profit_type} by a and b')
 
-# Find the point of maximum profit in the interpolated data
-max_profit_idx = np.unravel_index(np.argmax(z_grid, axis=None), z_grid.shape)
-max_profit_x = x_grid[max_profit_idx]
-max_profit_y = y_grid[max_profit_idx]
-max_profit_value = z_grid[max_profit_idx]
+# Find the points of the top 30 maximum profits in the interpolated data
+sorted_indices = np.argsort(z_grid, axis=None)[::-1]
+top_30_indices = sorted_indices[:30]
 
-# Mark the point of maximum profit with an asterisk
-ax.annotate('*', (max_profit_x, max_profit_y), color='red', fontsize=20, ha='center', va='center')
+# Different markers and colors for top 30 points
+markers = ['*', 'o', 's', '^', 'D', 'p', 'X', 'v', '<', '>', 'H', '+', '1', '2', '3', '4', '|', '_', '8', 'x', '*', 'o', 's', '^', 'D', 'p', 'X', 'v', '<', '>']
+colors = ['red', 'blue', 'green', 'purple', 'orange', 'pink', 'cyan', 'brown', 'yellow', 'black', 'lime', 'navy', 'maroon', 'teal', 'magenta', 'grey', 'olive', 'turquoise', 'indigo', 'gold', 'coral', 'tan', 'silver', 'chocolate', 'plum', 'peru', 'lavender', 'beige', 'azure', 'slategray']
+
+for rank, (idx, marker, color) in enumerate(zip(top_30_indices, markers, colors), start=1):
+    max_profit_idx = np.unravel_index(idx, z_grid.shape)
+    max_profit_x = x_grid[max_profit_idx]
+    max_profit_y = y_grid[max_profit_idx]
+    ax.scatter(max_profit_x, max_profit_y, marker=marker, color=color, s=100, label=f'Rank {rank}')
 
 # Enable interactive tooltips
 cursor = mplcursors.cursor(sc, hover=True)
 
 @cursor.connect("add")
 def on_add(sel):
-    sel.annotation.set_text(f'a: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
+    if sel.target.index in top_30_indices:
+        rank = top_30_indices.tolist().index(sel.target.index) + 1
+        sel.annotation.set_text(f'Rank: {rank}\na: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
+    else:
+        sel.annotation.set_text(f'a: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
+
+ax.legend(loc='upper right')
 
 # Show the plot
 plt.show()

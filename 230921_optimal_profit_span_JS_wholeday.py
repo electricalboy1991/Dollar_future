@@ -24,15 +24,15 @@ from scipy.interpolate import griddata
 
 
 # a는 청산 percent 값
-percent_start = 0.002
-percent_finish = 0.007
-percent_gap = 0.0005
+percent_start = 0.0035
+percent_finish = 0.0075
+percent_gap = 0.0001
 a_range = np.arange(percent_start, percent_finish, percent_gap)
 
 # b는 청산 percent 값
-b_percent_start = 0.0025
-b_percent_finish = 0.007
-b_percent_gap = 0.0005
+b_percent_start = 0.0055
+b_percent_finish = 0.0075
+b_percent_gap = 0.0001
 b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
 
 
