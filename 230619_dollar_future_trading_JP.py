@@ -55,6 +55,7 @@ def get_data_frame(soup, data_key):
     reer_df.set_index('Date', inplace=True)
     return reer_df
 
+<<<<<<< HEAD
 def get_currency_data(ticker, start_date, end_date):
     # Fetch data using yfinance
     data = yf.download(ticker, start=start_date, end=end_date)
@@ -64,6 +65,24 @@ def get_currency_data(ticker, start_date, end_date):
     df.index = df.index.date
     df.index = df.index.astype("str")
     return df
+=======
+def get_alpha_data(alpha_api_key, url):
+    response = requests.get(url)
+    alpha_data = response.json()
+
+    # alpha_data 딕셔너리에 있는 키 출력
+    print("alpha_data에 있는 키들:", alpha_data.keys())
+
+    # alpha_data 전체 구조 확인
+    print("alpha_data:", alpha_data)
+
+    # 기존 코드를 사용하여 DataFrame 생성
+    alpha_df = pd.DataFrame(alpha_data["Time Series FX (Daily)"]).T
+    alpha_df.columns = ["open", "high", "low", "close"]
+    alpha_df = alpha_df.iloc[:400]
+    return alpha_df
+>>>>>>> master
+
 
 def get_dollar_index_value(dollar_index_data):
     return dollar_index_data["Close"].values[0]
