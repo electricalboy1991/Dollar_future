@@ -4,11 +4,11 @@ import numpy as np
 from scipy.interpolate import griddata
 import mplcursors
 
-# Specify the file path (the actual path to the Excel file must be entered here)
-file_path = '231025_simulation_result_0.0035,0.0075,0.0001_0.0055,0.0075,0.0001_0.005,0.0055,0.0005_wholeday.xlsx'
-
-# Load data from Excel file
+file_path = '231026_simulation_result_0.0025,0.007,0.0001_0.0025,0.007,0.0001_0.005,0.0055,0.0005_wholeday.xlsx'
 data = pd.read_excel(file_path)
+
+# file_path = '231027_simulation_result_0.005,0.012,0.001_0.005,0.012,0.001_0.005,0.0055,0.0005_wholeday.csv'
+# data = pd.read_csv(file_path)
 
 # Set the profit type here
 profit_type = 'short_profits'  # Change this as needed
@@ -58,8 +58,7 @@ cursor = mplcursors.cursor(sc, hover=True)
 @cursor.connect("add")
 def on_add(sel):
     if sel.target.index in top_30_indices:
-        rank = top_30_indices.tolist().index(sel.target.index) + 1
-        sel.annotation.set_text(f'Rank: {rank}\na: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
+        sel.annotation.set_text(f'a: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
     else:
         sel.annotation.set_text(f'a: {x.iloc[sel.target.index]}\nb: {y.iloc[sel.target.index]}\n{profit_type}: {z.iloc[sel.target.index]}')
 

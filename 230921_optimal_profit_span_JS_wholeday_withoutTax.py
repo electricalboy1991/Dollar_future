@@ -40,10 +40,10 @@ n_p_range = np.arange(n_p_start, n_p_finish, n_p_gap)
 years = 3
 minutes_per_day = 24 * 60
 initial_balance = 0
-commission = 0.06
+commission = 0.055
 GC = 1200
 buffer = 0
-tax_rate = 0.11
+tax_rate = 0
 df = pd.read_csv('n분석_data.csv')
 df['datetime'] = pd.to_datetime(df['datetime'], format='%y-%m-%d %H:%M')
 df['datetime'] = df['datetime'] - pd.Timedelta(hours=1)
