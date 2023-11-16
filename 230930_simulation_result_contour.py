@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import griddata
 import mplcursors
 
-file_path = '231026_simulation_result_0.0025,0.007,0.0001_0.0025,0.007,0.0001_0.005,0.0055,0.0005_wholeday.xlsx'
+file_path = '231104_simulation_result_0.0045,0.0075,0.0005_0.0045,0.0075,0.0005_0.005,0.0055,0.0005_wholeday.xlsx'
 data = pd.read_excel(file_path)
 
 # file_path = '231027_simulation_result_0.005,0.012,0.001_0.005,0.012,0.001_0.005,0.0055,0.0005_wholeday.csv'
@@ -40,7 +40,7 @@ ax.set_title(f'2D Contour plot of {profit_type} by a and b')
 
 # Find the points of the top 30 maximum profits in the interpolated data
 sorted_indices = np.argsort(z_grid, axis=None)[::-1]
-top_30_indices = sorted_indices[:30]
+top_30_indices = sorted_indices[:5]
 
 # Different markers and colors for top 30 points
 markers = ['*', 'o', 's', '^', 'D', 'p', 'X', 'v', '<', '>', 'H', '+', '1', '2', '3', '4', '|', '_', '8', 'x', '*', 'o', 's', '^', 'D', 'p', 'X', 'v', '<', '>']

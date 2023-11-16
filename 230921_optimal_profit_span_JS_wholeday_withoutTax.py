@@ -19,15 +19,15 @@ from datetime import datetime
 """
 
 # a는 청산 percent 값
-percent_start = 0.0035
+percent_start = 0.0045
 percent_finish = 0.0075
-percent_gap = 0.0001
+percent_gap = 0.0005
 a_range = np.arange(percent_start, percent_finish, percent_gap)
 
 # b는 청산 percent 값
-b_percent_start = 0.0055
+b_percent_start = 0.0045
 b_percent_finish = 0.0075
-b_percent_gap = 0.0001
+b_percent_gap = 0.0005
 b_range = np.arange(b_percent_start, b_percent_finish, b_percent_gap)
 
 # 포지션 잡는 Grid 기준
@@ -47,8 +47,8 @@ tax_rate = 0
 df = pd.read_csv('n분석_data.csv')
 df['datetime'] = pd.to_datetime(df['datetime'], format='%y-%m-%d %H:%M')
 df['datetime'] = df['datetime'] - pd.Timedelta(hours=1)
-df = df[df['datetime'] >= '2020-04-07 09:00:00']
-# df = df[df['datetime'] <= '2023-04-20 09:00:00']
+df = df[df['datetime'] >= '2022-05-01 09:00:00']
+df = df[df['datetime'] <= '2023-05-01 04:00:00']
 
 df['요일'] = df['datetime'].dt.day_name()
 weekend = ['Sunday']
@@ -102,6 +102,26 @@ def calculate_profit(a,b,n_p):
     tax_short_total = 0
     tax_long_total = 0
 
+    def numContractsFunction(executionPrice):
+        if 975 <= executionPrice < 1065:
+            numContracts = 6
+        elif 1065 <= executionPrice < 1150:
+            numContracts = 9
+        elif 1150 <= executionPrice < 1200:
+            numContracts = 11
+        elif 1200 <= executionPrice < 1245:
+            numContracts = 10
+        elif 1245 <= executionPrice < 1335:
+            numContracts = 8
+        elif 1335 <= executionPrice < 1445:
+            numContracts = 5
+        else:
+            numContracts = 5
+            print("Out of boundary")
+            print(executionPrice)
+
+        return numContracts
+
     for index, row in target_df.iterrows():
         short_liquid_flag = 0
         long_liquid_flag = 0
@@ -114,18 +134,19 @@ def calculate_profit(a,b,n_p):
         # print(index,price)
         if 18 <= datetime.hour <= 23:
             n_p = b
-            contracts = b * price
+            # contracts = b * price
         elif 0 <= datetime.hour <= 5:
             n_p = b
-            contracts = b * price
+            # contracts = b * price
         else:
             n_p = a
-            contracts = a * price
+            # contracts = a * price
+
 
         # n 가 있는 이유는 n이 10이랑 1일 때랑 비교 시 단순 1200 기준으로 했을 때 문제가 생기기 때문
         # 1201에서 n 10이여서 short 10개 치는 거랑, n 1이여서 short 1개 치는 거 비교하면 당연히 short 10개 치는 게 수익 많이 나오겠지
         # 여기서 a 를 쓰는 이유는, 주야 상관 없이 GC 기준 간격을 띄어 놓는 크기는 동일하게 두기 위함, 그리고 이거는 GC 바로 근처에 있을때만 영향이 크지 한참 벗어나서는 상관이 없음
-        if price > GC +a*price/2  or (price <= GC+a*price/2  and short_positions):
+        if price > GC +a*price  or (price <= GC+a*price  and short_positions):
 
             # Short position, short position 들어가있는거 다 돌아서 loop돌기
             for i, short_position in enumerate(short_positions):
@@ -168,7 +189,7 @@ def calculate_profit(a,b,n_p):
                                 closest_time = target_df[target_df['datetime'] < target_tax_time]['datetime'].max()
                                 tax_close_price = target_df[target_df['datetime'] == closest_time]['close'].iloc[0]
                             # 실제 청산되어서 세금이 매겨지는 가격은 night_target_price지. price가 아니라. 나는 지정가로 청산시키니까
-                            tax_now = -((night_target_price - tax_close_price) * contracts * tax_rate)
+                            tax_now = -((night_target_price - tax_close_price) * short_position['contracts'] * tax_rate)
                             # 00시 넘어서는 무조건 청산 가격 먹는 거로
                             profit = (short_position['price'] - night_target_price) * short_position['contracts']
                         else:
@@ -196,9 +217,9 @@ def calculate_profit(a,b,n_p):
                         short_balance = short_balance + profit
 
                     liquidations += 1
+                    total_num_cont = short_position['contracts'] + total_num_cont
+                    short_num_cont = short_position['contracts'] + short_num_cont
                     short_positions.pop(i)
-                    total_num_cont = contracts + total_num_cont
-                    short_num_cont = contracts + short_num_cont
                     # print("숏 청산",index,short_positions,long_positions)
                     short_liquid_flag=1
                     break
@@ -206,8 +227,10 @@ def calculate_profit(a,b,n_p):
             if not short_positions and short_liquid_flag==0:
                 # 여기는 포지션이 하나도 없는 상태에서 진입하는 거니까, price 종가 그대로 진입하는 게 맞음
                 target_price = round(price * (1 - a), 4)
+                contracts = numContractsFunction(price)
                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': price, 'contracts' : contracts})
                 total_num_cont = contracts + total_num_cont
+                short_num_cont = contracts + short_num_cont
                 # print("초기 숏 잡기",index,short_positions,long_positions)
 
                 if 18 <= datetime.hour <= 23:
@@ -243,24 +266,29 @@ def calculate_profit(a,b,n_p):
                 else:
                     #아래 조건만 만족하면 무조건 진입임
                     #야간 기준에는 n_p가 b로 바뀌면서 더 큰 범위로 진입
-                    if short_positions[-1]['price'] + n_p*price < price and price >GC+n_p*price/2  :
+                    if short_positions[-1]['price'] + n_p*price < price and price >=GC+n_p*price  :
                         #널 뛰기 진입이 가능 -> 해당 경우 고려
                         if (datetime.hour == 9 and datetime.minute == 0) or (datetime.hour == 18 and datetime.minute == 0):
                             #널 뛰기 진입 가능하며, open가 부터 이미 진입 가격을 넘어버림 -> price_open로 진입
                             if short_positions[-1]['price'] + n_p*price < price_open:
                                 #주야 상관 없이, 일단 진입시 target_price는 a기준으로 함, 이 후 청산할 때 이게 야간에 청산이라면 야간에 맞게 가지고 감
                                 target_price = round(price_open * (1 - a), 4)
+                                contracts = numContractsFunction(price_open)
                                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': price_open, 'contracts' : contracts})
                             else:
                                 # 주야 상관 없이, 일단 진입시 target_price는 a기준으로 함, 이 후 청산할 때 이게 야간에 청산이라면 야간에 맞게 가지고 감
                                 target_price = round((short_positions[-1]['price'] + n_p*price) * (1 - a), 4)
+                                contracts = numContractsFunction(short_positions[-1]['price'] + n_p*price)
                                 short_positions.append({'short_target_price': target_price, 'datetime': datetime, 'price': (short_positions[-1]['price'] + n_p*price), 'contracts' : contracts})
                         #널뛰기 진입이 불가능 -> 그래서  "short_positions[-1]['price'] + n"
                         else:
                             # 나는 지정가로 그리드 매매 하기 때문에, 딱 그 그리드 경계에서 매도 하는 거임. "그래서  short_positions[-1]['price'] + n"
                             target_price = round((short_positions[-1]['price'] + n_p*price) * (1 - a), 4)
+                            contracts = numContractsFunction(short_positions[-1]['price'] + n_p*price)
                             short_positions.append({'short_target_price': target_price,'datetime': datetime,'price' : (short_positions[-1]['price'] + n_p*price), 'contracts' : contracts})
-                        total_num_cont = contracts+total_num_cont
+                        total_num_cont = contracts + total_num_cont
+                        short_num_cont = contracts + short_num_cont
+
                         # print("숏 잡기 추가",index,short_positions,long_positions)
                         if 18 <= datetime.hour <= 23:
                             target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
@@ -287,7 +315,7 @@ def calculate_profit(a,b,n_p):
                             tax_total = tax_total + tax_now
                             tax_short_total = tax_short_total + tax_now
 
-        if price < GC-buffer-a*price/2  or (price >= GC-buffer-a*price/2  and long_positions):
+        if price < GC-buffer-a*price  or (price >= GC-buffer-a*price  and long_positions):
             for i, long_position in enumerate(long_positions):
                 if price >= long_position['long_target_price']:
                     if 18 <= datetime.hour <= 23:
@@ -348,17 +376,21 @@ def calculate_profit(a,b,n_p):
                         long_balance = long_balance + profit
 
                     liquidations += 1
+
+                    total_num_cont = long_position['contracts'] + total_num_cont
+                    long_num_cont = long_position['contracts'] + long_num_cont
                     long_positions.pop(i)
-                    total_num_cont = contracts + total_num_cont
-                    long_num_cont = contracts + long_num_cont
                     # print("롱 청산",index,short_positions,long_positions)
                     long_liquid_flag=1
                     break
             if not long_positions and long_liquid_flag==0:
                 #포지션이 없을 때는 그냥 close 가격인 price 기준으로 들어가는 거지
                 target_price = round(price * (1 + a), 4)
+                contracts = numContractsFunction(price)
                 long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : price, 'contracts' : contracts})
                 total_num_cont = contracts + total_num_cont
+                long_num_cont = contracts + long_num_cont
+
                 # print("초기 롱 잡기",index,short_positions,long_positions)
                 if 18 <= datetime.hour <= 23:
                     target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
@@ -391,23 +423,26 @@ def calculate_profit(a,b,n_p):
                 if not long_positions:
                     pass
                 else:
-                    if long_positions[-1]['price'] - n_p*price > price and price < GC-buffer-n_p*price/2 :
+                    if long_positions[-1]['price'] - n_p*price > price and price <= GC-buffer-n_p*price :
                         # 널 뛰기 진입이 가능 -> 해당 경우 고려
                         if (datetime.hour == 9 and datetime.minute == 0) or (datetime.hour == 18 and datetime.minute == 0):
                             # 시장이 새로 열리자 마자 price_open가격이 그리드 기준을 넘어섬 -> 널뛰기 진입 -> price_open가로 진입
                             if long_positions[-1]['price'] - n_p*price > price_open:
                                 target_price = round(price_open * (1 + a), 4)
+                                contracts = numContractsFunction(price_open)
                                 long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': price_open, 'contracts' : contracts})
                             # close 가격은 기준 그리드를 넘어서서 포지션을 잡아야하는데, open은 만족 x -> 기존 그리드 대로 포지션 잡기
                             else:
                                 target_price = round((long_positions[-1]['price'] - n_p*price) * (1 + a), 4)
+                                contracts = numContractsFunction(long_positions[-1]['price'] - n_p*price)
                                 long_positions.append({'long_target_price': target_price, 'datetime': datetime, 'price': (long_positions[-1]['price'] - n_p*price), 'contracts' : contracts})
                         else:
                             # Create a new short position
                             target_price = round((long_positions[-1]['price'] - n_p*price) * (1 + a), 4)
+                            contracts = numContractsFunction(long_positions[-1]['price'] - n_p*price)
                             long_positions.append({'long_target_price': target_price,'datetime': datetime,'price' : (long_positions[-1]['price'] - n_p*price), 'contracts' : contracts})
                         total_num_cont = contracts + total_num_cont
-
+                        long_num_cont = contracts + long_num_cont
                         if 18 <= datetime.hour <= 23:
                             target_tax_time = pd.Timestamp(year=datetime.year, month=datetime.month, day=datetime.day, hour=15, minute=30)
                             if target_tax_time in target_df['datetime'].values:
