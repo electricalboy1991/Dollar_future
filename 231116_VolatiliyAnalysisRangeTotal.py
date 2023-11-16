@@ -41,17 +41,35 @@ def determine_day(row):
     # Return the date in '%Y-%m-%d' format
     return date_time_obj.strftime('%Y-%m-%d')
 
+
 def categorize_time(row):
     time = row.time()
-    if time >= pd.Timestamp('09:00').time() and time < pd.Timestamp('12:15').time():
+    month = row.month # Extract the month from the datetime
+
+    # For April to October 서머타임 적용
+    # if 4 <= month <= 10:
+    #     if time >= pd.Timestamp('21:00').time() or time < pd.Timestamp('00:15').time():
+    #         return 'LtoC time'
+
+    # For November to March 평상시
+    # elif month >= 11 or month <= 3:
+    #     if time >= pd.Timestamp('22:00').time() or time < pd.Timestamp('01:15').time():
+    #         return 'LtoC time'
+
+    # For other time ranges
+    if time > pd.Timestamp('09:00').time() and time < pd.Timestamp('12:15').time():
         return '9am-12:15pm'
-    elif time >= pd.Timestamp('12:15').time() and time < pd.Timestamp('15:30').time():
+    elif time > pd.Timestamp('12:15').time() and time < pd.Timestamp('15:30').time():
         return '12:15pm-15:30pm'
-    #평상시 22~ 01:30 // 서머타임은 21시 00시30분 (4월 ~ 10월)
-    elif time >= pd.Timestamp('22:00').time() or time < pd.Timestamp('01:15').time():
-        return 'LtoC time'
+    elif 4 <= month <= 10:
+        if time > pd.Timestamp('21:00').time() or time < pd.Timestamp('00:15').time():
+            return 'LtoC time'
+    elif month >= 11 or month <= 3:
+        if time > pd.Timestamp('22:00').time() or time < pd.Timestamp('01:15').time():
+            return 'LtoC time'
     else:
         return 'other'
+
 
 def largest_time_slot(row):
     if row['LtoC time'] > row['9am-12:15pm'] and row['LtoC time'] > row['12:15pm-15:30pm']:
