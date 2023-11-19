@@ -293,7 +293,7 @@ if __name__ == "__main__":
                                           f"￥ 환율: {round(jpy_to_krw, 2)}\n￥ 적정: {round(std_JP, 2)}\n￥ GC: {round(GC_JP, 2)}"
 
                 check_and_send_message(range_gap, range_gap_list, flags, Telegram_str)
-                check_and_send_message(range_gap_JP, range_gap_list_JP, flags_JP, Telegram_str_JP)
+                # check_and_send_message(range_gap_JP, range_gap_list_JP, flags_JP, Telegram_str_JP)
 
 
                 if GC < usd_to_krw < std or GC > usd_to_krw > std:
@@ -303,12 +303,12 @@ if __name__ == "__main__":
                     line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 START (PV)  \U0001F680 ]" + Telegram_str)
                     investment_flag = 1
 
-                if GC_JP < jpy_to_krw < std_JP or GC_JP > usd_to_krw > std_JP:
-                    line_alert.SendMessage_SP("[ \U0001F64A JPY 투자 STOP (PV)  \U0001F6A8 ]" + Telegram_str_JP)
-                    investment_flag_JP = 0
-                elif not(GC_JP < jpy_to_krw < std_JP or GC_JP > usd_to_krw > std_JP) and investment_flag_JP==0:
-                    line_alert.SendMessage_SP("[ \U0001F64A USD 투자 START (PV)  \U0001F680 ]" + Telegram_str_JP)
-                    investment_flag_JP = 1
+                # if GC_JP < jpy_to_krw < std_JP or GC_JP > usd_to_krw > std_JP:
+                #     line_alert.SendMessage_SP("[ \U0001F64A JPY 투자 STOP (PV)  \U0001F6A8 ]" + Telegram_str_JP)
+                #     investment_flag_JP = 0
+                # elif not(GC_JP < jpy_to_krw < std_JP or GC_JP > usd_to_krw > std_JP) and investment_flag_JP==0:
+                #     line_alert.SendMessage_SP("[ \U0001F64A JPY 투자 START (PV)  \U0001F680 ]" + Telegram_str_JP)
+                #     investment_flag_JP = 1
 
                 if np.mean(json.load(open(data_52_dollar_file_path))[:100]) + +MA_filter_criteria <= usd_to_krw:
                     line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 STOP (MA filter)  \U0001F6A8 ]" + Telegram_str)
@@ -318,13 +318,13 @@ if __name__ == "__main__":
                     line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 START (MA filter)  \U0001F680 ]" + Telegram_str)
                     MA80_flag = 1
 
-                if min_flag == 1:
-                    current_time = datetime.now(timezone('Asia/Seoul'))
-                    KR_time = str(current_time)
-                    KR_time_sliced = KR_time[:23]
-                    line_alert.SendMessage_dollar(f"JPY \U0001F64A{KR_time_sliced}\U0001F64A JPY{Telegram_str_JP}")
-                else:
-                    continue
+                # if min_flag == 1:
+                #     current_time = datetime.now(timezone('Asia/Seoul'))
+                #     KR_time = str(current_time)
+                #     KR_time_sliced = KR_time[:23]
+                #     line_alert.SendMessage_dollar(f"JPY \U0001F64A{KR_time_sliced}\U0001F64A JPY{Telegram_str_JP}")
+                # else:
+                #     continue
 
                 if min_flag == 1:
                     current_time = datetime.now(timezone('Asia/Seoul'))
