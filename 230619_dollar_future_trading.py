@@ -225,14 +225,14 @@ if __name__ == "__main__":
             print("Real-time value of Dollar Index:", dollar_index_value)
 
             if hour == 6 and min == 29 and min_flag == 1 and not time_info.tm_wday >= 5:
-                gap_ratio_today = dollar_index_value / usd_to_krw * 100
-                gap_ratio_today_JP = dollar_index_value / usd_to_jpy * 100
+                # gap_ratio_today = dollar_index_value / usd_to_krw * 100
+                # gap_ratio_today_JP = dollar_index_value / usd_to_jpy * 100
 
                 dollar_today =  usd_to_krw
                 yen_today = usd_to_jpy
 
-                update_data(data_52_index_gap_file_path, gap_ratio_today)
-                update_data(data_52_index_gap_JP_file_path, gap_ratio_today_JP)
+                # update_data(data_52_index_gap_file_path, gap_ratio_today)
+                # update_data(data_52_index_gap_JP_file_path, gap_ratio_today_JP)
 
                 update_data(data_52_dollar_file_path , dollar_today)
                 update_data(data_52_yen_file_path, yen_today)
@@ -296,7 +296,7 @@ if __name__ == "__main__":
                 # check_and_send_message(range_gap_JP, range_gap_list_JP, flags_JP, Telegram_str_JP)
 
 
-                if GC < usd_to_krw < std or GC > usd_to_krw > std:
+                if (GC < usd_to_krw < std or GC > usd_to_krw > std) and investment_flag==1:
                     line_alert.SendMessage_SP("[ \U0001F4B0 USD 투자 STOP (PV)  \U0001F6A8 ]" + Telegram_str)
                     investment_flag=0
                 elif not(GC < usd_to_krw < std or GC > usd_to_krw > std) and investment_flag==0:

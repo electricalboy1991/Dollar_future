@@ -59,29 +59,35 @@ import line_alert
 #     else:
 #         line_alert.SendMessage_SP("[ \U0001F535 엔/원 인베스팅 크롤링 실패 \U0001F535 ]")
 #         return 200
-# def get_dollar_index():
-#     ua = UserAgent()
-#     header = {'User-Agent': str(ua.random)}
-#     BASE_URL = 'https://kr.investing.com/currencies/us-dollar-index'
-#     url = Request(BASE_URL, headers=header)
-#     html = urlopen(url)
-#
-#     if html.status == 200:
-#         # print('인베스팅')
-#         soup = BeautifulSoup(html, 'html.parser')
-#         element = soup.find('span', class_='arial_26 inlineblock pid-8827-last', id='last_last')
-#         DX = round(float(element.text.replace(',', '')), 2)
-#         return DX
-#     else:
-#         line_alert.SendMessage_SP("[ \U0001F535 DX 인베스팅 크롤링 실패 \U0001F535 ]")
-#         return 100
+def get_dollar_index():
+    ua = UserAgent()
+    header = {'User-Agent': str(ua.random)}
+    BASE_URL = 'https://kr.investing.com/currencies/us-dollar-index'
+    url = Request(BASE_URL, headers=header)
+    html = urlopen(url)
 
+    if html.status == 200:
+        # print('인베스팅')
+        soup = BeautifulSoup(html, 'html.parser')
+        element = soup.find('span', class_='arial_26 inlineblock pid-8827-last', id='last_last')
+        DX = round(float(element.text.replace(',', '')), 2)
+        return DX
+    else:
+        line_alert.SendMessage_SP("[ \U0001F535 DX 인베스팅 크롤링 실패 \U0001F535 ]")
+        return 100
 
-# 야후 파이낸스
 def get_exchange_rate():
-    ticker = yf.Ticker("USDKRW=X")  # Yahoo Finance symbol for USD to PHP exchange rate
-    exchange_rate = ticker.history().tail(1)["Close"].values[0]
-    return exchange_rate
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+    url = 'https://quotation-api-cdn.dunamu.com/v1/forex/recent?codes=FRX.KRWUSD'
+    exchange =requests.get(url, headers=headers).json()
+    return exchange[0]['basePrice']
+
+
+# # 야후 파이낸스
+# def get_exchange_rate():
+#     ticker = yf.Ticker("USDKRW=X")  # Yahoo Finance symbol for USD to PHP exchange rate
+#     exchange_rate = ticker.history().tail(1)["Close"].values[0]
+#     return exchange_rate
 
 def get_exchange_rate_JP():
     ticker = yf.Ticker("USDJPY=X")  # Yahoo Finance symbol for USD to PHP exchange rate
@@ -93,10 +99,10 @@ def get_exchange_rate_JP_KR():
     exchange_rate = ticker.history().tail(1)["Close"].values[0]
     return exchange_rate
 
-def get_dollar_index():
-    ticker = yf.Ticker("DX-Y.NYB")  # Yahoo Finance symbol for the dollar index
-    data = ticker.history().tail(1)
-    return data
+# def get_dollar_index():
+#     ticker = yf.Ticker("DX-Y.NYB")  # Yahoo Finance symbol for the dollar index
+#     data = ticker.history().tail(1)
+#     return data
 
 def hashkey(datas):
     APP_KEY = "PSM9hB6QskUJju5b2ZnswSNfyBLuN7bwNT6C"
